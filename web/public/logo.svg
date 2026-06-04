@@ -1,47 +1,37 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 270 48">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 48" role="img" aria-label="ImobLeilão CRM">
   <defs>
     <style>
-      .icon-bg { fill: #1a3c34; }
-      .gold { fill: #c8911f; }
-      .white { fill: #ffffff; }
-      .wordmark { fill: #1a3c34; font-family: system-ui, -apple-system, sans-serif; font-weight: 700; font-size: 21px; letter-spacing: -0.5px; }
-      .wordmark-accent { fill: #c8911f; }
+      .wm { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; font-weight: 800; font-size: 19px; letter-spacing: -0.3px; }
     </style>
   </defs>
 
-  <!-- ICON-ONLY VERSION (48x48 with padding, icon area 40x40) -->
+  <!-- === ICON (48x48 area) === -->
   <g id="icon">
-    <!-- Rounded square background -->
-    <rect x="4" y="4" width="40" height="40" rx="9" class="icon-bg"/>
-
-    <!-- Building / house silhouette -->
-    <polygon points="24,14 14,22 14,34 34,34 34,22" class="white"/>
-    <!-- Roof peak accent -->
-    <polygon points="24,14 14,22 34,22" class="gold" opacity="0.25"/>
-    <!-- Door -->
-    <rect x="21.5" y="27" width="5" height="7" class="icon-bg"/>
+    <rect x="4" y="4" width="40" height="40" rx="9.5" fill="#1a3c34"/>
+    <!-- House body -->
+    <rect x="12" y="22" width="24" height="16" rx="1.2" fill="#fff"/>
+    <!-- Roof / gavel head: thick golden chevron -->
+    <path d="M8 24L24 13L40 24" fill="none" stroke="#c8911f" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Gavel handle from peak -->
+    <line x1="24" y1="13" x2="34" y2="5.5" stroke="#c8911f" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- Impact arc -->
+    <path d="M36 8a4 4 0 0 1 2-3.5" fill="none" stroke="#c8911f" stroke-width="1.2" stroke-linecap="round" opacity="0.55"/>
+    <!-- Door with arch -->
+    <path d="M21 38v-7.5a3 3 0 0 1 6 0V38" fill="#1a3c34"/>
     <!-- Window left -->
-    <rect x="16" y="24.5" width="3.5" height="3" rx="0.5" class="icon-bg"/>
+    <rect x="13.5" y="24.5" width="4.5" height="3.8" rx="0.8" fill="#1a3c34" opacity="0.55"/>
     <!-- Window right -->
-    <rect x="28.5" y="24.5" width="3.5" height="3" rx="0.5" class="icon-bg"/>
-
-    <!-- Gavel — angled at top-right corner -->
-    <!-- Handle (diagonal bar) -->
-    <rect x="27" y="8" width="2.4" height="11" rx="1.2" class="gold" transform="rotate(-40, 28.2, 13.5)"/>
-    <!-- Hammer head (horizontal block at top of handle) -->
-    <rect x="25.5" y="7" width="10" height="3.5" rx="1.2" class="gold" transform="rotate(-40, 30.5, 8.75)"/>
-    <!-- Impact mark (small star/dot) -->
-    <circle cx="23" cy="17" r="1.3" class="gold"/>
+    <rect x="30" y="24.5" width="4.5" height="3.8" rx="0.8" fill="#1a3c34" opacity="0.55"/>
   </g>
 
-  <!-- FULL LOCKUP VERSION (icon + wordmark) -->
+  <!-- === WORDMARK === -->
   <g id="lockup">
     <use href="#icon"/>
-
-    <!-- Wordmark: Leilão + CRM -->
-    <text x="54" y="32" class="wordmark">ImobLeil&#227;o <tspan class="wordmark-accent">CRM</tspan></text>
-
-    <!-- Gold accent underline -->
-    <rect x="54" y="36.5" width="72" height="1.5" rx="0.75" class="gold" opacity="0.5"/>
+    <!-- "ImobLeilão" in brand green -->
+    <text x="54" y="31" class="wm" fill="#1a3c34">ImobLeilão</text>
+    <!-- "CRM" in gold accent -->
+    <text x="185" y="31" class="wm" fill="#c8911f">CRM</text>
+    <!-- Subtle gold underline -->
+    <line x1="54" y1="36" x2="225" y2="36" stroke="#c8911f" stroke-width="1.5" stroke-linecap="round" opacity="0.35"/>
   </g>
 </svg>
