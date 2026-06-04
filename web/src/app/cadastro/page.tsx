@@ -33,7 +33,7 @@ export default function CadastroPage() {
   }
 
   return (
-    <AuthShell title="Criar conta" subtitle="Comece a atender pelo WhatsApp">
+    <AuthShell title="Criar conta" subtitle="Comece a captar leads de leilão com IA">
       <form onSubmit={onSubmit} className="space-y-4">
         <AuthField name="name" type="text" label="Seu nome" placeholder="Nome completo" />
         <AuthField name="email" type="email" label="E-mail" placeholder="voce@empresa.com" />

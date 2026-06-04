@@ -31,22 +31,70 @@ export default function LoginPage() {
   }
 
   return (
-    <AuthShell title="Entrar" subtitle="Acesse o seu painel de atendimento">
-      <form onSubmit={onSubmit} className="space-y-4">
-        <AuthField name="email" type="email" label="E-mail" placeholder="voce@empresa.com" />
-        <AuthField name="password" type="password" label="Senha" placeholder="••••••••" />
-        {error && <p className="text-xs text-danger">{error}</p>}
-        <Button type="submit" className="w-full" disabled={pending}>
-          {pending ? "Entrando..." : "Entrar"}
-        </Button>
-      </form>
-      <p className="mt-4 text-center text-sm text-ink-soft">
-        Não tem conta?{" "}
-        <Link href="/cadastro" className="font-medium text-brand hover:underline">
-          Cadastre-se
-        </Link>
-      </p>
-    </AuthShell>
+    <div className="flex min-h-screen">
+      {/* Left — Brand panel */}
+      <div className="hidden w-1/2 flex-col justify-between bg-brand p-12 text-white lg:flex">
+        <div className="animate-fade-up">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.svg" alt="" className="h-10 brightness-0 invert" aria-hidden="true" />
+          <h1 className="mt-1 font-display text-lg font-bold tracking-tight">
+            Leilão<span className="text-accent">CRM</span>
+          </h1>
+        </div>
+
+        <div className="animate-fade-up stagger-2">
+          <blockquote className="max-w-md border-l-2 border-accent pl-5">
+            <p className="text-xl font-display font-semibold leading-snug tracking-tight">
+              &ldquo;Seu corretor dorme.<br />
+              Seu vendedor de IA <span className="text-accent">não</span>.&rdquo;
+            </p>
+          </blockquote>
+          <p className="mt-6 max-w-sm text-sm leading-relaxed text-white/70">
+            Agente de IA que atende no WhatsApp 24/7, qualifica leads, busca imóveis de leilão
+            e calcula viabilidade — antes do seu concorrente acordar.
+          </p>
+        </div>
+
+        <p className="text-xs text-white/40 animate-fade-in stagger-5">
+          LeilãoCRM — CRM + IA para imobiliárias de leilão
+        </p>
+      </div>
+
+      {/* Right — Form */}
+      <div className="flex flex-1 items-center justify-center bg-canvas p-6">
+        <div className="w-full max-w-sm animate-fade-up">
+          {/* Mobile logo */}
+          <div className="mb-8 flex flex-col items-center text-center lg:hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.svg" alt="" className="mb-3 h-12" aria-hidden="true" />
+            <h1 className="font-display text-xl font-bold text-ink">
+              Leilão<span className="text-accent">CRM</span>
+            </h1>
+          </div>
+
+          <div className="rounded-card bg-surface p-8 shadow-lg border border-stone-200/60">
+            <div className="mb-6">
+              <h2 className="font-display text-xl font-semibold text-ink">Entrar</h2>
+              <p className="text-sm text-ink-soft">Acesse o seu painel de leilões</p>
+            </div>
+            <form onSubmit={onSubmit} className="space-y-4">
+              <AuthField name="email" type="email" label="E-mail" placeholder="voce@imobiliaria.com" autoComplete="email" />
+              <AuthField name="password" type="password" label="Senha" placeholder="••••••••" autoComplete="current-password" />
+              {error && <p role="alert" className="text-xs text-danger">{error}</p>}
+              <Button type="submit" className="w-full" disabled={pending}>
+                {pending ? "Entrando..." : "Entrar"}
+              </Button>
+            </form>
+            <p className="mt-4 text-center text-sm text-ink-soft">
+              Não tem conta?{" "}
+              <Link href="/cadastro" className="font-medium text-accent hover:underline">
+                Cadastre-se
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -61,11 +109,11 @@ export function AuthShell({
 }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-canvas p-4">
-      <div className="w-full max-w-sm rounded-card bg-surface p-8 shadow-lg">
+      <div className="w-full max-w-sm rounded-card bg-surface p-8 shadow-lg border border-stone-200/60 animate-fade-up">
         <div className="mb-6 flex flex-col items-center text-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-mvf.png" alt="MVF" className="mb-4 h-24 w-auto rounded-xl" />
-          <h1 className="text-xl font-semibold text-ink">{title}</h1>
+          <img src="/logo.svg" alt="" className="mb-4 h-14" aria-hidden="true" />
+          <h1 className="font-display text-xl font-semibold text-ink">{title}</h1>
           <p className="text-sm text-ink-soft">{subtitle}</p>
         </div>
         {children}
@@ -79,21 +127,25 @@ export function AuthField({
   type,
   label,
   placeholder,
+  autoComplete,
 }: {
   name: string;
   type: string;
   label: string;
   placeholder?: string;
+  autoComplete?: string;
 }) {
   return (
     <div>
-      <label className="mb-1 block text-xs font-medium text-ink-soft">{label}</label>
+      <label htmlFor={name} className="mb-1 block text-xs font-medium text-ink-soft">{label}</label>
       <input
+        id={name}
         name={name}
         type={type}
         required
         placeholder={placeholder}
-        className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-brand"
+        autoComplete={autoComplete}
+        className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2.5 text-sm text-ink outline-none transition-all placeholder:text-stone-400 focus:border-brand focus:ring-2 focus:ring-brand/20"
       />
     </div>
   );

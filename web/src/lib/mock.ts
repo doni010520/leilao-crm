@@ -3,14 +3,11 @@ import type { Channel, ConversationOverview, Message, Department, Tag, QuickRepl
 // Dados de exemplo usados no "modo preview" (sem Supabase configurado),
 // inspirados na conta real para a tela ficar realista.
 export const MOCK_CHANNELS: Channel[] = [
-  mk("IBICUI - API Oficial", "meta_cloud", "5573818706370", "connected"),
-  mk("IGUAI - API Oficial", "meta_cloud", "5573882793100", "connected"),
-  mk("CENTRAL MVFNET", "uazapi", "557382481156", "connected"),
-  mk("MVF NET CANAA 1730", "uazapi", "5573988171730", "connected"),
-  mk("MVF NET Firmino Alves", "uazapi", "5573981813824", "connected"),
-  mk("MVF NET Rio do Meio", "uazapi", "5573991332104", "connected"),
-  mk("IBICUÍ 02", "uazapi", "557382287802", "disconnected"),
-  mk("IGUAÍ 02", "uazapi", "557382353596", "connecting"),
+  mk("Leilão SP — API Oficial", "meta_cloud", "5511999880001", "connected"),
+  mk("Leilão RJ — API Oficial", "meta_cloud", "5521999880002", "connected"),
+  mk("Atendimento Geral", "uazapi", "5511999880003", "connected"),
+  mk("Captação de Leads", "uazapi", "5511999880004", "connected"),
+  mk("Pós-Arremate", "uazapi", "5511999880005", "disconnected"),
 ];
 
 function mk(
@@ -35,51 +32,51 @@ function mk(
 export const PREVIEW_MODE = !process.env.NEXT_PUBLIC_SUPABASE_URL;
 
 export const MOCK_DEPARTMENTS: Department[] = [
-  { id: "d1", organization_id: "preview", name: "Suporte Técnico", color: "#00a8ff", created_at: "" },
-  { id: "d2", organization_id: "preview", name: "Financeiro", color: "#f59e0b", created_at: "" },
-  { id: "d3", organization_id: "preview", name: "Comercial", color: "#10b981", created_at: "" },
+  { id: "d1", organization_id: "preview", name: "Captação", color: "#1a3c34", created_at: "" },
+  { id: "d2", organization_id: "preview", name: "Negociação", color: "#c8911f", created_at: "" },
+  { id: "d3", organization_id: "preview", name: "Pós-venda", color: "#16a34a", created_at: "" },
 ];
 
 export const MOCK_TAGS: Tag[] = [
-  { id: "t1", organization_id: "preview", name: "Resolvido", color: "#10b981", scope: "conversation", created_at: "" },
-  { id: "t2", organization_id: "preview", name: "Aguardando pagamento", color: "#f59e0b", scope: "conversation", created_at: "" },
-  { id: "t3", organization_id: "preview", name: "VIP", color: "#8b5cf6", scope: "contact", created_at: "" },
-  { id: "t4", organization_id: "preview", name: "Almoço", color: "#6b7280", scope: "status", created_at: "" },
+  { id: "t1", organization_id: "preview", name: "Qualificado", color: "#16a34a", scope: "conversation", created_at: "" },
+  { id: "t2", organization_id: "preview", name: "Aguardando leilão", color: "#c8911f", scope: "conversation", created_at: "" },
+  { id: "t3", organization_id: "preview", name: "Investidor", color: "#1a3c34", scope: "contact", created_at: "" },
+  { id: "t4", organization_id: "preview", name: "1ª compra", color: "#6b7280", scope: "contact", created_at: "" },
 ];
 
 export const MOCK_QUICK_REPLIES: QuickReply[] = [
-  { id: "q1", organization_id: "preview", title: "Saudação", content: "Olá! Como posso ajudar?", shortcut: "/oi", kind: "model", created_at: "" },
-  { id: "q2", organization_id: "preview", title: "Horário", content: "Atendemos de seg a sex, 8h às 18h.", shortcut: "/horario", kind: "model", created_at: "" },
+  { id: "q1", organization_id: "preview", title: "Saudação", content: "Olá! Sou o assistente da imobiliária. Como posso ajudar com leilões de imóveis?", shortcut: "/oi", kind: "model", created_at: "" },
+  { id: "q2", organization_id: "preview", title: "Como funciona", content: "Leilão de imóveis é a compra com desconto de até 60% do valor de mercado. Quer que eu busque oportunidades na sua região?", shortcut: "/como", kind: "model", created_at: "" },
 ];
 
 export const MOCK_AGENTS: Profile[] = [
-  { id: "u1", organization_id: "preview", name: "Tainá Borges", email: "taina@mvf.com", role: "agent", department_id: "d1", avatar_url: null, status: "online", whatsapp: null, notify: true, created_at: "" },
-  { id: "u2", organization_id: "preview", name: "Luana Santos", email: "luana@mvf.com", role: "supervisor", department_id: "d2", avatar_url: null, status: "away", whatsapp: null, notify: true, created_at: "" },
-  { id: "u3", organization_id: "preview", name: "ADONIAS SOUZA", email: "adonias@mvf.com", role: "admin", department_id: null, avatar_url: null, status: "offline", whatsapp: null, notify: true, created_at: "" },
+  { id: "u1", organization_id: "preview", name: "Juliana Corretora", email: "juliana@leilaocrm.com.br", role: "agent", department_id: "d1", avatar_url: null, status: "online", whatsapp: null, notify: true, created_at: "" },
+  { id: "u2", organization_id: "preview", name: "Rafael Broker", email: "rafael@leilaocrm.com.br", role: "supervisor", department_id: "d2", avatar_url: null, status: "away", whatsapp: null, notify: true, created_at: "" },
+  { id: "u3", organization_id: "preview", name: "Adonias Souza", email: "adonias@leilaocrm.com.br", role: "admin", department_id: null, avatar_url: null, status: "offline", whatsapp: null, notify: true, created_at: "" },
 ];
 
 // ---------- Conversas e mensagens (modo preview) ----------
 const ago = (min: number) => new Date(Date.now() - min * 60000).toISOString();
 
 export const MOCK_CONVERSATIONS: ConversationOverview[] = [
-  conv("Joana Lima", "5573991110001", "MVF NET CANAA 1730", "uazapi", "open", "Boa tarde! Minha internet está oscilando desde ontem.", 2),
-  conv("Carlos Eduardo", "5573991110002", "CENTRAL MVFNET", "uazapi", "queued", "Quero saber sobre o plano de 500MB", 11),
-  conv("Maria Santos", "5573991110003", "IBICUI - API Oficial", "meta_cloud", "open", "Já fiz o pagamento, pode confirmar?", 25),
-  conv("Pedro Alves", "5573991110004", "MVF NET Rio do Meio", "uazapi", "bot", "menu", 40),
-  conv("Lucia Ferreira", "5573991110005", "IGUAI - API Oficial", "meta_cloud", "closed", "Obrigada, resolvido!", 180),
+  conv("Carlos Investidor", "5511999990001", "Atendimento Geral", "uazapi", "open", "Vi um apto na Consolação por R$ 312 mil. Quero mais detalhes sobre o leilão.", 2),
+  conv("Ana Martins", "5511999990002", "Leilão SP — API Oficial", "meta_cloud", "queued", "Quero saber como funciona leilão de imóveis da Caixa", 11),
+  conv("Roberto Flipper", "5521999990003", "Leilão RJ — API Oficial", "meta_cloud", "open", "Fiz o lance no apto de Copacabana, acompanha pra mim?", 25),
+  conv("Fernanda Renda", "5511999990004", "Captação de Leads", "uazapi", "bot", "menu", 40),
+  conv("Pedro Curioso", "5511999990005", "Atendimento Geral", "uazapi", "closed", "Obrigado, vou pensar na proposta!", 180),
 ];
 
 export const MOCK_MESSAGES: Record<string, Message[]> = {
   [MOCK_CONVERSATIONS[0].id]: [
-    msg(MOCK_CONVERSATIONS[0].id, "in", "contact", "Boa tarde!", 6),
-    msg(MOCK_CONVERSATIONS[0].id, "out", "agent", "Boa tarde, Joana! Como posso ajudar?", 5),
-    msg(MOCK_CONVERSATIONS[0].id, "in", "contact", "Minha internet está oscilando desde ontem.", 2),
+    msg(MOCK_CONVERSATIONS[0].id, "in", "contact", "Boa tarde! Vi um apto na Consolação em leilão.", 6),
+    msg(MOCK_CONVERSATIONS[0].id, "out", "agent", "Boa tarde, Carlos! É o da Rua Augusta, lance mínimo R$ 312k com 40% de desconto. Quer que eu calcule a viabilidade?", 5),
+    msg(MOCK_CONVERSATIONS[0].id, "in", "contact", "Sim, por favor! Quero investir à vista.", 2),
   ],
   [MOCK_CONVERSATIONS[1].id]: [
-    msg(MOCK_CONVERSATIONS[1].id, "in", "contact", "Quero saber sobre o plano de 500MB", 11),
+    msg(MOCK_CONVERSATIONS[1].id, "in", "contact", "Como funciona leilão de imóveis da Caixa?", 11),
   ],
   [MOCK_CONVERSATIONS[2].id]: [
-    msg(MOCK_CONVERSATIONS[2].id, "in", "contact", "Já fiz o pagamento, pode confirmar?", 25),
+    msg(MOCK_CONVERSATIONS[2].id, "in", "contact", "Fiz o lance no apto de Copacabana, acompanha pra mim?", 25),
   ],
 };
 

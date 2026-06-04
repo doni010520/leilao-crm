@@ -26,11 +26,11 @@ function mockReport(): ReportData {
       { name: "Em andamento", value: 13 }, { name: "Na automação", value: 6 },
     ],
     byChannel: [
-      { name: "CENTRAL MVFNET", value: 520 }, { name: "IBICUI - API Oficial", value: 410 },
-      { name: "MVF NET CANAA 1730", value: 360 }, { name: "IGUAI - API Oficial", value: 280 }, { name: "Outros", value: 128 },
+      { name: "Atendimento Geral", value: 520 }, { name: "Leilão SP — API Oficial", value: 410 },
+      { name: "Captação de Leads", value: 360 }, { name: "Leilão RJ — API Oficial", value: 280 }, { name: "Outros", value: 128 },
     ],
     byDepartment: [
-      { name: "Suporte Técnico", value: 980 }, { name: "Financeiro", value: 430 }, { name: "Comercial", value: 288 },
+      { name: "Captação", value: 980 }, { name: "Negociação", value: 430 }, { name: "Pós-venda", value: 288 },
     ],
   };
 }

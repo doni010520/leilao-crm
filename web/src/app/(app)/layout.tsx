@@ -6,8 +6,8 @@ import { getSession } from "@/lib/auth";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const hasEnv = !!process.env.NEXT_PUBLIC_SUPABASE_URL;
 
-  let userName = "ADONIAS SOUZA";
-  let orgName = "Modo preview";
+  let userName = "Adonias Souza";
+  let orgName = "LeilãoCRM (preview)";
   let email: string | undefined;
 
   if (hasEnv) {

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Rounded square background -->
+  <rect width="32" height="32" rx="6" fill="#1a3c34"/>
+
+  <!-- Building / house silhouette -->
+  <polygon points="16,8 8,14 8,25 24,25 24,14" fill="#ffffff"/>
+  <!-- Roof accent -->
+  <polygon points="16,8 8,14 24,14" fill="#c8911f" opacity="0.25"/>
+  <!-- Door -->
+  <rect x="14" y="19.5" width="4" height="5.5" fill="#1a3c34"/>
+  <!-- Window left -->
+  <rect x="9.5" y="16" width="3" height="2.5" rx="0.4" fill="#1a3c34"/>
+  <!-- Window right -->
+  <rect x="19.5" y="16" width="3" height="2.5" rx="0.4" fill="#1a3c34"/>
+
+  <!-- Gavel handle -->
+  <rect x="18.5" y="3" width="2" height="9" rx="1" fill="#c8911f" transform="rotate(-40, 19.5, 7.5)"/>
+  <!-- Gavel head -->
+  <rect x="17" y="2.5" width="8" height="3" rx="1" fill="#c8911f" transform="rotate(-40, 21, 4)"/>
+  <!-- Impact dot -->
+  <circle cx="15.5" cy="10.5" r="1" fill="#c8911f"/>
+</svg>

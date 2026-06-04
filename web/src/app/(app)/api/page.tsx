@@ -16,7 +16,7 @@ export default async function ApiKeysPage() {
   const keys = await getKeys();
   return (
     <Scroll>
-      <PageHeader title="Chaves de API" subtitle="Gere chaves para integrar sistemas externos ao MVF." />
+      <PageHeader title="Chaves de API" subtitle="Gere chaves para integrar sistemas externos ao LeilãoCRM." />
       <ApiKeysClient keys={keys} />
     </Scroll>
   );
