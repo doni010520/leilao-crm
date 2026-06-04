@@ -64,12 +64,9 @@ export default function LoginPage() {
       <div className="flex flex-1 items-center justify-center bg-canvas p-6">
         <div className="w-full max-w-sm animate-fade-up">
           {/* Mobile logo */}
-          <div className="mb-8 flex flex-col items-center text-center lg:hidden">
+          <div className="mb-8 flex justify-center lg:hidden">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.svg" alt="" className="mb-3 h-12" aria-hidden="true" />
-            <h1 className="font-display text-xl font-bold text-ink">
-              ImobLeilão <span className="text-accent">CRM</span>
-            </h1>
+            <img src="/logo.svg" alt="ImobLeilão CRM" className="h-12" />
           </div>
 
           <div className="rounded-card bg-surface p-8 shadow-lg border border-stone-200/60">

@@ -1,23 +1,28 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 48" role="img" aria-label="ImobLeilão CRM">
-  <!-- === ICON (44x44 area centered in 48h) === -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 40" role="img" aria-label="ImobLeilão CRM">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a3c34"/>
+      <stop offset="100%" stop-color="#14302a"/>
+    </linearGradient>
+  </defs>
+
+  <!-- === ICON (40x40) === -->
   <g id="icon">
-    <rect x="2" y="2" width="44" height="44" rx="10" fill="#1a3c34"/>
-    <!-- House body -->
-    <rect x="10" y="22" width="28" height="16" rx="1.2" fill="#fff"/>
-    <!-- Roof = gavel head: thick golden chevron -->
-    <path d="M7 24L24 12L41 24" fill="none" stroke="#c8911f" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round"/>
-    <!-- Gavel handle from peak -->
-    <line x1="24" y1="12" x2="33" y2="5" stroke="#c8911f" stroke-width="2.2" stroke-linecap="round"/>
-    <!-- Impact arc -->
-    <path d="M34.5 7a3.5 3.5 0 0 1 1.5-3" fill="none" stroke="#c8911f" stroke-width="1" stroke-linecap="round" opacity="0.5"/>
-    <!-- Door with arch -->
-    <path d="M21 38v-6a3 3 0 0 1 6 0v6" fill="#1a3c34"/>
-    <!-- Window left -->
-    <rect x="11.5" y="24.5" width="4.5" height="3.5" rx="0.7" fill="#1a3c34" opacity="0.5"/>
-    <!-- Window right -->
-    <rect x="32" y="24.5" width="4.5" height="3.5" rx="0.7" fill="#1a3c34" opacity="0.5"/>
+    <rect width="40" height="40" rx="10" fill="url(#g)"/>
+    <!-- "I" vertical bar = left wall -->
+    <rect x="10" y="10" width="5.5" height="21" rx="1.2" fill="#ffffff"/>
+    <!-- "L" floor + right wall -->
+    <rect x="10" y="26" width="20" height="5" rx="1.2" fill="#ffffff"/>
+    <rect x="24.5" y="15" width="5.5" height="16" rx="1.2" fill="#ffffff"/>
+    <!-- Roof: golden chevron -->
+    <path d="M10 11.5L20 4.5L30 11.5" fill="none" stroke="#c8911f" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
 
   <!-- === WORDMARK === -->
-  <text x="56" y="33" font-family="system-ui,-apple-system,sans-serif" font-weight="800" font-size="22" letter-spacing="-0.5" fill="#1a3c34">ImobLeil&#227;o<tspan dx="6" fill="#c8911f">CRM</tspan></text>
+  <text x="52" y="22" font-family="system-ui,-apple-system,'Segoe UI',sans-serif" font-weight="800" font-size="18" letter-spacing="-0.3" fill="#1a3c34">
+    ImobLeilão
+  </text>
+  <text x="52" y="35" font-family="system-ui,-apple-system,'Segoe UI',sans-serif" font-weight="700" font-size="11" letter-spacing="3" fill="#c8911f">
+    CRM
+  </text>
 </svg>
