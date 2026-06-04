@@ -15,7 +15,7 @@ const body = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "LeilãoCRM — CRM + IA para Imobiliárias de Leilão",
+  title: "ImobLeilão CRM — CRM + IA para Imobiliárias de Leilão",
   description: "Pipeline de leads, base de imóveis, agente de IA no WhatsApp e muito mais.",
   icons: { icon: "/favicon.svg" },
 };

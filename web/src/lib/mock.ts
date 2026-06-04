@@ -50,9 +50,9 @@ export const MOCK_QUICK_REPLIES: QuickReply[] = [
 ];
 
 export const MOCK_AGENTS: Profile[] = [
-  { id: "u1", organization_id: "preview", name: "Juliana Corretora", email: "juliana@leilaocrm.com.br", role: "agent", department_id: "d1", avatar_url: null, status: "online", whatsapp: null, notify: true, created_at: "" },
-  { id: "u2", organization_id: "preview", name: "Rafael Broker", email: "rafael@leilaocrm.com.br", role: "supervisor", department_id: "d2", avatar_url: null, status: "away", whatsapp: null, notify: true, created_at: "" },
-  { id: "u3", organization_id: "preview", name: "Adonias Souza", email: "adonias@leilaocrm.com.br", role: "admin", department_id: null, avatar_url: null, status: "offline", whatsapp: null, notify: true, created_at: "" },
+  { id: "u1", organization_id: "preview", name: "Juliana Corretora", email: "juliana@imobleilao.com.br", role: "agent", department_id: "d1", avatar_url: null, status: "online", whatsapp: null, notify: true, created_at: "" },
+  { id: "u2", organization_id: "preview", name: "Rafael Broker", email: "rafael@imobleilao.com.br", role: "supervisor", department_id: "d2", avatar_url: null, status: "away", whatsapp: null, notify: true, created_at: "" },
+  { id: "u3", organization_id: "preview", name: "Adonias Souza", email: "adonias@imobleilao.com.br", role: "admin", department_id: null, avatar_url: null, status: "offline", whatsapp: null, notify: true, created_at: "" },
 ];
 
 // ---------- Conversas e mensagens (modo preview) ----------

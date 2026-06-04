@@ -7,7 +7,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const hasEnv = !!process.env.NEXT_PUBLIC_SUPABASE_URL;
 
   let userName = "Adonias Souza";
-  let orgName = "LeilãoCRM (preview)";
+  let orgName = "ImobLeilão CRM (preview)";
   let email: string | undefined;
 
   if (hasEnv) {

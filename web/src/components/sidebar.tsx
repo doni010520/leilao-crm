@@ -38,14 +38,14 @@ export function Sidebar() {
         {/* Logo */}
         <Link
           href="/dashboard"
-          aria-label="LeilãoCRM — Ir para o Dashboard"
+          aria-label="ImobLeilão CRM — Ir para o Dashboard"
           className={cn("mb-2 flex items-center gap-2.5", expanded ? "px-1" : "justify-center")}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.svg" alt="" className="h-9 w-9 shrink-0" aria-hidden="true" />
           {expanded && (
             <span className="whitespace-nowrap font-display text-lg font-bold tracking-tight text-ink">
-              Leilão<span className="text-accent">CRM</span>
+              ImobLeilão <span className="text-accent">CRM</span>
             </span>
           )}
         </Link>

@@ -38,7 +38,7 @@ export default function LoginPage() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.svg" alt="" className="h-10 brightness-0 invert" aria-hidden="true" />
           <h1 className="mt-1 font-display text-lg font-bold tracking-tight">
-            Leilão<span className="text-accent">CRM</span>
+            ImobLeilão <span className="text-accent">CRM</span>
           </h1>
         </div>
 
@@ -56,7 +56,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-xs text-white/40 animate-fade-in stagger-5">
-          LeilãoCRM — CRM + IA para imobiliárias de leilão
+          ImobLeilão CRM — CRM + IA para imobiliárias de leilão
         </p>
       </div>
 
@@ -68,7 +68,7 @@ export default function LoginPage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo.svg" alt="" className="mb-3 h-12" aria-hidden="true" />
             <h1 className="font-display text-xl font-bold text-ink">
-              Leilão<span className="text-accent">CRM</span>
+              ImobLeilão <span className="text-accent">CRM</span>
             </h1>
           </div>
 
