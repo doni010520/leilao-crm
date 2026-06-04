@@ -1,0 +1,83 @@
+import {
+  LayoutDashboard,
+  BarChart3,
+  MessageSquareText,
+  LayoutGrid,
+  Radio,
+  Bot,
+  Megaphone,
+  Users,
+  Layers,
+  Settings,
+  Plug,
+  Tag,
+  History,
+  Building2,
+  Wallet,
+  KeyRound,
+  Home,
+  Kanban,
+  Handshake,
+  ClipboardList,
+  Calculator,
+  type LucideIcon,
+} from "lucide-react";
+
+export interface NavItem {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+}
+
+export interface NavGroup {
+  title: string;
+  items: NavItem[];
+}
+
+export const NAV: NavGroup[] = [
+  {
+    title: "Geral",
+    items: [
+      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { href: "/relatorios", label: "Relatórios", icon: BarChart3 },
+    ],
+  },
+  {
+    title: "Leilão",
+    items: [
+      { href: "/pipeline", label: "Pipeline", icon: Kanban },
+      { href: "/imoveis", label: "Imóveis", icon: Home },
+      { href: "/negocios", label: "Negócios", icon: Handshake },
+      { href: "/tarefas", label: "Tarefas", icon: ClipboardList },
+    ],
+  },
+  {
+    title: "Atendimento",
+    items: [
+      { href: "/canais", label: "Canais", icon: Radio },
+      { href: "/atendimento", label: "Atendimento", icon: MessageSquareText },
+      { href: "/mensagens", label: "Mensagens", icon: Tag },
+      { href: "/automacoes", label: "Automações", icon: Bot },
+      { href: "/campanhas", label: "Campanhas", icon: Megaphone },
+    ],
+  },
+  {
+    title: "Empresa",
+    items: [
+      { href: "/empresa", label: "Dados da empresa", icon: Building2 },
+      { href: "/atendentes", label: "Atendentes", icon: Users },
+      { href: "/departamentos", label: "Departamentos", icon: Layers },
+      { href: "/ajustes", label: "Ajustes", icon: Settings },
+    ],
+  },
+  {
+    title: "Integrações",
+    items: [
+      { href: "/integracoes", label: "Integrações", icon: Plug },
+      { href: "/api", label: "Chaves de API", icon: KeyRound },
+      { href: "/auditoria", label: "Auditoria", icon: History },
+    ],
+  },
+];
+
+export const ALL_ITEMS: NavItem[] = NAV.flatMap((g) => g.items);

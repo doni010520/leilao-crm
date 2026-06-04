@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+.next/
+.venv/
+venv/
+__pycache__/
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Build
+web/.next/
+web/out/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Python
+*.pyc
+*.egg-info/

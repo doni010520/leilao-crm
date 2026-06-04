@@ -1,0 +1,35 @@
+# ═══════════════════════════════════════════════════════════════
+# LEILÃO CRM — Full Stack
+# web: Next.js CRM (frontend + Supabase)
+# agent: FastAPI AI Agent (WhatsApp + OpenAI)
+# ═══════════════════════════════════════════════════════════════
+version: "3.8"
+
+services:
+  # The web CRM connects to your Supabase project (hosted or self-hosted).
+  # No database container needed — Supabase handles it.
+  web:
+    build: ./web
+    restart: always
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    environment:
+      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+
+  # The AI agent needs Redis for message buffering.
+  redis:
+    image: redis:7-alpine
+    restart: always
+
+  agent:
+    build: ./agent
+    restart: always
+    ports:
+      - "${AGENT_PORT:-8000}:8000"
+    env_file: ./agent/.env
+    environment:
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      - redis
