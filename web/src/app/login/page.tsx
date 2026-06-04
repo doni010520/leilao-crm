@@ -34,10 +34,10 @@ export default function LoginPage() {
     <div className="flex min-h-screen">
       {/* Left — Brand panel */}
       <div className="hidden w-1/2 flex-col justify-between bg-brand p-12 text-white lg:flex">
-        <div className="animate-fade-up">
+        <div className="flex items-center gap-3 animate-fade-up">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.svg" alt="" className="h-10 brightness-0 invert" aria-hidden="true" />
-          <h1 className="mt-1 font-display text-lg font-bold tracking-tight">
+          <img src="/favicon.svg" alt="" className="h-11 w-11" aria-hidden="true" />
+          <h1 className="font-display text-xl font-bold tracking-tight">
             ImobLeilão <span className="text-accent">CRM</span>
           </h1>
         </div>
