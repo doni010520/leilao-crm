@@ -52,7 +52,6 @@ export const NAV: NavGroup[] = [
       { href: "/atendimento", label: "Inbox", icon: MessageSquareText },
       { href: "/ajustes/ia", label: "Agente de IA", icon: Sparkles },
       { href: "/canais", label: "Canais WhatsApp", icon: Radio },
-      { href: "/mensagens", label: "Respostas Rápidas", icon: Tag },
       { href: "/automacoes", label: "Automações", icon: Bot },
       { href: "/campanhas", label: "Campanhas", icon: Megaphone },
     ],
