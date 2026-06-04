@@ -45,13 +45,13 @@ export default function LoginPage() {
         <div className="animate-fade-up stagger-2">
           <blockquote className="max-w-md border-l-2 border-accent pl-5">
             <p className="text-xl font-display font-semibold leading-snug tracking-tight">
-              &ldquo;Seu corretor dorme.<br />
+              &ldquo;Você dorme.<br />
               Seu vendedor de IA <span className="text-accent">não</span>.&rdquo;
             </p>
           </blockquote>
           <p className="mt-6 max-w-sm text-sm leading-relaxed text-white/70">
             Agente de IA que atende no WhatsApp 24/7, qualifica leads, busca imóveis de leilão
-            e calcula viabilidade — antes do seu concorrente acordar.
+            e calcula viabilidade — enquanto você foca em fechar negócios.
           </p>
         </div>
 
