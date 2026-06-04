@@ -2,7 +2,7 @@ import Link from "next/link";
 import {
   Plus, Radio, ArrowRight, Flame, TrendingUp,
   Home, Handshake, Users, MessageSquare, Kanban,
-  ClipboardList, Building,
+  ClipboardList, Building, Sparkles,
 } from "lucide-react";
 import { getChannels } from "@/lib/data/channels";
 import { getAuctionStats } from "@/lib/data/auction";
@@ -110,6 +110,24 @@ export default async function DashboardPage() {
             />
           </div>
         </section>
+
+        {/* AI Agent CTA */}
+        {channels.length === 0 && (
+          <Link href="/ajustes/ia" className="mt-8 block animate-fade-up stagger-5">
+            <div className="flex items-center gap-5 rounded-card border-2 border-dashed border-accent/40 bg-accent-light/40 p-6 transition-all hover:border-accent hover:bg-accent-light/60">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-accent/10">
+                <Sparkles size={28} className="text-accent" />
+              </div>
+              <div>
+                <h3 className="font-display text-base font-bold text-ink">Configure seu Agente de IA</h3>
+                <p className="mt-1 text-sm text-ink-soft">
+                  Personalize o assistente que vai atender seus clientes no WhatsApp 24/7, qualificar leads e transferir os quentes pra você.
+                </p>
+              </div>
+              <ArrowRight size={20} className="shrink-0 text-accent" />
+            </div>
+          </Link>
+        )}
 
         {/* Quick links */}
         <section className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-4 animate-fade-up stagger-5">
