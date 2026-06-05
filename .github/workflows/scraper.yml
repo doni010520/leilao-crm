@@ -1,0 +1,42 @@
+name: Scraper Caixa → Supabase
+
+on:
+  # Manual trigger with state selection
+  workflow_dispatch:
+    inputs:
+      estados:
+        description: "Estados (comma-separated, ex: SP,RJ,MG)"
+        required: false
+        default: "SP,RJ,MG,PR,RS,BA,PE,CE,DF,GO"
+  # Automatic: every day at 6am BRT (9am UTC)
+  schedule:
+    - cron: "0 9 * * *"
+
+env:
+  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+  SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install httpx playwright
+          playwright install chromium
+
+      - name: Run scraper
+        run: |
+          python .github/scripts/scrape_caixa.py \
+            --estados "${{ github.event.inputs.estados || 'SP,RJ,MG,PR,RS,BA,PE,CE,DF,GO' }}" \
+            --supabase-url "$SUPABASE_URL" \
+            --supabase-key "$SUPABASE_SERVICE_KEY"
