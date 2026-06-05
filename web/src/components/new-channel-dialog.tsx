@@ -60,7 +60,7 @@ export function NewChannelDialog() {
                 <label className="mb-1 block text-xs font-medium text-ink-soft">Tipo de conexão</label>
                 <div className="grid grid-cols-2 gap-2">
                   <TypeOption
-                    label="WhatsApp Pessoal"
+                    label="WhatsApp Web"
                     desc="Conecte via QR Code ou código de 8 dígitos"
                     active={type === "uazapi"}
                     onClick={() => setType("uazapi")}
