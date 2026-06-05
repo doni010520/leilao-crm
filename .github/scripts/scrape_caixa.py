@@ -163,39 +163,63 @@ async def download_csv(uf: str) -> str | None:
 
 
 async def upsert_to_supabase(props: list[dict], supabase_url: str, supabase_key: str) -> int:
-    """Insert properties to Supabase via REST API."""
+    """Insert properties to Supabase via REST API in batches."""
     url = f"{supabase_url}/rest/v1/properties"
     headers = {
         "apikey": supabase_key,
         "Authorization": f"Bearer {supabase_key}",
         "Content-Type": "application/json",
-        "Prefer": "return=minimal",
+        "Prefer": "return=minimal,resolution=ignore-duplicates",
     }
-    count = 0
-    async with httpx.AsyncClient(timeout=30) as client:
-        for prop in props:
-            row = {k: v for k, v in prop.items() if v is not None}
-            if not row.get("cidade"):
-                continue
+    # Clean data
+    clean = []
+    for p in props:
+        row = {k: v for k, v in p.items() if v is not None}
+        if not row.get("cidade") or not row.get("estado"):
+            continue
+        row.setdefault("status", "aberto")
+        row.setdefault("ocupacao", "nao_informado")
+        clean.append(row)
 
-            # Try insert
-            resp = await client.post(url, json=row, headers=headers)
-            if resp.status_code in (200, 201):
-                count += 1
-            elif resp.status_code == 409 or "duplicate" in resp.text.lower():
-                # Update existing
-                eid = row.get("external_id", "")
-                patch_url = f"{url}?external_id=eq.{eid}&fonte=eq.caixa"
-                await client.patch(patch_url, json={
-                    "lance_minimo": row.get("lance_minimo"),
-                    "desconto_pct": row.get("desconto_pct"),
-                    "aceita_financiamento": row.get("aceita_financiamento"),
-                }, headers=headers)
-                count += 1
-            else:
-                # Log first few errors
-                if count < 3:
-                    print(f"  Insert error: {resp.status_code} {resp.text[:100]}")
+    if not clean:
+        return 0
+
+    count = 0
+    batch_size = 50
+    async with httpx.AsyncClient(timeout=httpx.Timeout(60.0, connect=30.0)) as client:
+        for i in range(0, len(clean), batch_size):
+            batch = clean[i:i+batch_size]
+            for attempt in range(3):
+                try:
+                    resp = await client.post(url, json=batch, headers=headers)
+                    if resp.status_code in (200, 201):
+                        count += len(batch)
+                        break
+                    elif resp.status_code == 409:
+                        # Batch had conflicts, insert one by one
+                        for row in batch:
+                            try:
+                                r = await client.post(url, json=row, headers=headers)
+                                if r.status_code in (200, 201):
+                                    count += 1
+                            except:
+                                pass
+                        break
+                    else:
+                        if attempt == 0:
+                            print(f"  Batch error: {resp.status_code} {resp.text[:100]}")
+                        if attempt < 2:
+                            await asyncio.sleep(2)
+                except httpx.TimeoutException:
+                    print(f"  Timeout on batch {i//batch_size + 1}, retry {attempt + 1}")
+                    await asyncio.sleep(5)
+                except Exception as e:
+                    print(f"  Error: {e}")
+                    break
+
+            if (i // batch_size) % 5 == 0 and i > 0:
+                print(f"  Progress: {count}/{len(clean)}")
+
     return count
 
 
