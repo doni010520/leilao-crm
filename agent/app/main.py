@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from loguru import logger
 
 from app.core.config import get_settings
-from app.api import webhooks, health
+from app.api import webhooks, health, scraper
 from app.services import buffer_service
 
 settings = get_settings()
@@ -23,9 +23,9 @@ async def _scraper_loop():
         logger.info("[SCRAPER] Starting scheduled scrape...")
         try:
             from scrapers.scraper import CaixaScraper, ZukScraper
-            if settings.scraper_caixa_enabled:
+            if settings.scraper_caixa_enabled and settings.database_url:
                 caixa = CaixaScraper(
-                    database_url="",  # Uses Supabase REST, not SQLAlchemy
+                    database_url=settings.database_url,
                     estados=["SP", "RJ", "MG", "PR", "RS", "BA", "PE", "CE", "DF", "GO"],
                 )
                 await caixa.run()
@@ -62,3 +62,4 @@ app = FastAPI(
 
 app.include_router(health.router, tags=["health"])
 app.include_router(webhooks.router, tags=["webhook"])
+app.include_router(scraper.router)

@@ -37,6 +37,9 @@ class Settings(BaseSettings):
     rag_enabled: bool = False
     rag_top_k: int = 5
 
+    # Database (direct PG for scraper — bypasses Supabase REST)
+    database_url: str = ""
+
     # Scraper
     scraper_caixa_enabled: bool = True
     scraper_zuk_enabled: bool = True
