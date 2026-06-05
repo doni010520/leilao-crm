@@ -44,8 +44,8 @@ export function NewChannelDialog() {
       </Button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md rounded-card bg-surface p-6 shadow-xl">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4" style={{ position: "fixed" }}>
+          <div className="w-full max-w-md rounded-card bg-surface p-6 shadow-xl animate-fade-up">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-ink">Novo canal</h2>
               <button onClick={() => setOpen(false)} className="text-ink-soft hover:text-ink">
