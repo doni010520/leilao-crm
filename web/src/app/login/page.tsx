@@ -88,6 +88,22 @@ export default function LoginPage() {
                 Cadastre-se
               </Link>
             </p>
+
+            {/* Demo access — remove before production */}
+            <div className="mt-4 border-t border-stone-100 pt-4">
+              <button
+                type="button"
+                onClick={() => {
+                  const emailInput = document.querySelector<HTMLInputElement>('input[name="email"]');
+                  const passInput = document.querySelector<HTMLInputElement>('input[name="password"]');
+                  if (emailInput) { emailInput.value = "adonias@leilaocrm.com.br"; emailInput.dispatchEvent(new Event("input", { bubbles: true })); }
+                  if (passInput) { passInput.value = "Leilao@2026!"; passInput.dispatchEvent(new Event("input", { bubbles: true })); }
+                }}
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-stone-300 py-2 text-xs font-medium text-ink-soft transition hover:border-accent hover:text-accent"
+              >
+                🔑 Entrar com conta de teste
+              </button>
+            </div>
           </div>
         </div>
       </div>

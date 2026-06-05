@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Bot, Save, Users, MapPin, Sparkles, GripVertical, Plus, Trash2, ChevronDown, ChevronUp, Info, BookOpen } from "lucide-react";
+import Link from "next/link";
+import { Bot, Save, Users, MapPin, Sparkles, GripVertical, Plus, Trash2, ChevronDown, ChevronUp, Info, BookOpen, Home, Upload, Radio, ArrowRight } from "lucide-react";
 import { PageHeader, Button, Card } from "@/components/ui";
 import { Scroll } from "@/components/scroll";
 
@@ -225,6 +226,54 @@ export default function AgentConfigPage() {
             placeholder={"Ex.:\n- Trabalhamos com leilões extrajudiciais da Caixa, Itaú e Bradesco\n- Oferecemos assessoria jurídica inclusa no serviço\n- Comissão: 5% sobre o valor do arremate\n- Aceitamos clientes que querem financiar pelo banco\n- Atuamos em São Paulo capital e região metropolitana\n- Temos parceria com o escritório X para desocupação"}
             className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2.5 text-sm text-ink outline-none transition-all placeholder:text-stone-400 focus:border-brand focus:ring-2 focus:ring-brand/20"
           />
+        </Section>
+
+        {/* ── Imóveis da IA ── */}
+        <Section title="Imóveis que a IA conhece" icon={<Home size={18} />} desc="A IA apresenta esses imóveis aos clientes interessados" open={openSections.imoveis ?? true} onToggle={() => toggle("imoveis")}>
+          <p className="mb-4 text-sm text-ink-soft">
+            Quando um lead diz que quer comprar, a IA busca imóveis na sua base e apresenta as melhores opções.
+            Quanto mais imóveis na base, melhor o atendimento. Existem 3 formas de adicionar:
+          </p>
+          <div className="space-y-3">
+            <Link href="/imoveis?tab=fontes" className="group flex items-center gap-4 rounded-xl border-2 border-stone-200 p-4 transition-all hover:border-brand hover:bg-brand-light/30">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-light text-brand">
+                <Radio size={20} />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-ink">Busca automática em portais de leilão</p>
+                <p className="mt-0.5 text-xs text-ink-soft">
+                  Ative a busca automática na Caixa, Zuk, Superbid e outros portais. A IA recebe os imóveis novos a cada 12 horas.
+                </p>
+              </div>
+              <ArrowRight size={16} className="shrink-0 text-stone-300 group-hover:text-brand" />
+            </Link>
+
+            <Link href="/imoveis?tab=importar" className="group flex items-center gap-4 rounded-xl border-2 border-stone-200 p-4 transition-all hover:border-accent hover:bg-accent-light/30">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-light text-accent">
+                <Upload size={20} />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-ink">Enviar planilha de imóveis</p>
+                <p className="mt-0.5 text-xs text-ink-soft">
+                  Faça upload de um .xlsx ou .csv com seus imóveis. Eles entram na base da IA imediatamente.
+                </p>
+              </div>
+              <ArrowRight size={16} className="shrink-0 text-stone-300 group-hover:text-accent" />
+            </Link>
+
+            <Link href="/imoveis" className="group flex items-center gap-4 rounded-xl border-2 border-stone-200 p-4 transition-all hover:border-brand hover:bg-brand-light/30">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-light text-brand">
+                <Home size={20} />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-ink">Ver todos os imóveis na base da IA</p>
+                <p className="mt-0.5 text-xs text-ink-soft">
+                  Consulte, edite e gerencie todos os imóveis que a IA pode apresentar aos seus leads.
+                </p>
+              </div>
+              <ArrowRight size={16} className="shrink-0 text-stone-300 group-hover:text-brand" />
+            </Link>
+          </div>
         </Section>
 
         {/* ── Quando me avisar ── */}
