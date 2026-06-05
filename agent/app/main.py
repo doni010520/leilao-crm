@@ -9,7 +9,13 @@ from fastapi import FastAPI
 from loguru import logger
 
 from app.core.config import get_settings
-from app.api import webhooks, health, scraper
+from app.api import webhooks, health
+try:
+    from app.api import scraper as scraper_router_mod
+except Exception as e:
+    scraper_router_mod = None
+    from loguru import logger as _lg
+    _lg.warning(f"Scraper router import failed: {e}")
 from app.services import buffer_service
 
 settings = get_settings()
@@ -62,4 +68,5 @@ app = FastAPI(
 
 app.include_router(health.router, tags=["health"])
 app.include_router(webhooks.router, tags=["webhook"])
-app.include_router(scraper.router)
+if scraper_router_mod:
+    app.include_router(scraper_router_mod.router)
