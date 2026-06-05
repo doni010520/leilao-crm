@@ -99,7 +99,7 @@ export function NewChannelDialog() {
               )}
 
               {type === "uazapi" && (
-                <p className="rounded-lg bg-brand-light px-3 py-2 text-xs text-brand-dark">
+                <p className="rounded-lg bg-brand-light px-3 py-2 text-xs text-brand">
                   Após cadastrar, será gerado um QR Code para você escanear no WhatsApp.
                 </p>
               )}
@@ -154,7 +154,7 @@ function TypeOption({
       type="button"
       onClick={onClick}
       className={`rounded-lg border p-3 text-left transition ${
-        active ? "border-brand bg-brand-light" : "border-gray-200 hover:border-gray-300"
+        active ? "border-brand bg-brand-light" : "border-stone-200 hover:border-stone-300"
       }`}
     >
       <p className="text-sm font-medium text-ink">{label}</p>
@@ -181,7 +181,7 @@ function Field({
         name={name}
         placeholder={placeholder}
         required={required}
-        className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-brand"
+        className="w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-brand"
       />
     </div>
   );

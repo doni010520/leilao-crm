@@ -47,7 +47,7 @@ export function ChannelsList({ channels }: { channels: Channel[] }) {
 
   return (
     <>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-2 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
         {channels.map((c) => {
           const clickable = c.type !== "meta_cloud"; // UAZAPI: clicar reabre conexão (QR/código)
           const menuBtn = (

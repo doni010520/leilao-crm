@@ -17,7 +17,7 @@ const STATUS_DOT: Record<ConversationStatus, string> = {
   bot: "bg-violet-500",
   queued: "bg-amber-500",
   open: "bg-green-500",
-  closed: "bg-gray-400",
+  closed: "bg-stone-400",
 };
 
 export function ConversationList({
@@ -45,15 +45,15 @@ export function ConversationList({
   });
 
   return (
-    <div className="flex h-full w-80 shrink-0 flex-col border-r border-gray-100 bg-surface">
-      <div className="border-b border-gray-100 p-3">
+    <div className="flex h-full w-80 shrink-0 flex-col border-r border-stone-100 bg-surface">
+      <div className="border-b border-stone-100 p-3">
         <div className="relative">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar conversa..."
-            className="w-full rounded-lg border border-gray-200 py-2 pl-9 pr-3 text-sm outline-none focus:border-brand"
+            className="w-full rounded-lg border border-stone-200 py-2 pl-9 pr-3 text-sm outline-none focus:border-brand"
           />
         </div>
         <div className="mt-2 flex gap-1 overflow-x-auto">
@@ -63,7 +63,7 @@ export function ConversationList({
               onClick={() => setFilter(f.key)}
               className={cn(
                 "whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium transition",
-                filter === f.key ? "bg-brand text-white" : "bg-gray-100 text-ink-soft hover:bg-gray-200",
+                filter === f.key ? "bg-brand text-white" : "bg-stone-100 text-ink-soft hover:bg-stone-200",
               )}
             >
               {f.label}
@@ -97,7 +97,7 @@ export function ConversationList({
               key={c.id}
               onClick={() => onSelect(c.id)}
               className={cn(
-                "flex w-full items-center gap-3 border-b border-gray-50 px-3 py-3 text-left transition hover:bg-gray-50",
+                "flex w-full items-center gap-3 border-b border-stone-50 px-3 py-3 text-left transition hover:bg-stone-50",
                 selectedId === c.id && "bg-brand-light hover:bg-brand-light",
               )}
             >
@@ -109,7 +109,7 @@ export function ConversationList({
                   <div
                     className={cn(
                       "flex h-10 w-10 items-center justify-center rounded-full text-xs font-semibold",
-                      isGroup ? "bg-brand-light text-brand" : "bg-gray-200 text-gray-600",
+                      isGroup ? "bg-brand-light text-brand" : "bg-stone-200 text-stone-600",
                     )}
                   >
                     {isGroup ? <Users size={18} /> : initials || "?"}

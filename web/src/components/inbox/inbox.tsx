@@ -446,11 +446,14 @@ export function Inbox({
 
   return (
     <div className="flex h-full">
-      <ConversationList
-        conversations={conversations}
-        selectedId={selectedId}
-        onSelect={selectConversation}
-      />
+      {/* Conversation list: hidden on mobile when a conversation is selected */}
+      <div className={`${selectedId ? "hidden lg:block" : "block"} w-full lg:w-auto`}>
+        <ConversationList
+          conversations={conversations}
+          selectedId={selectedId}
+          onSelect={selectConversation}
+        />
+      </div>
       {selected ? (
         <ChatThread
           conversation={selected}
@@ -468,6 +471,7 @@ export function Inbox({
           onAssign={handleAssign}
           onClose={handleClose}
           onToggleMute={handleToggleMute}
+          onBack={() => setSelectedId(null)}
           pending={isPending}
         />
       ) : (
@@ -501,10 +505,10 @@ export function Inbox({
                 if (e.key === "Escape") setEditing(null);
               }}
               rows={3}
-              className="w-full resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-brand"
+              className="w-full resize-none rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-brand"
             />
             <div className="mt-4 flex justify-end gap-2">
-              <button onClick={() => setEditing(null)} className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-ink hover:bg-gray-200">
+              <button onClick={() => setEditing(null)} className="rounded-lg bg-stone-100 px-4 py-2 text-sm font-medium text-ink hover:bg-stone-200">
                 Cancelar
               </button>
               <button onClick={saveEdit} disabled={!editing.text.trim()} className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-dark disabled:opacity-40">

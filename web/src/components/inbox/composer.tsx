@@ -114,19 +114,19 @@ export function Composer({
   }
 
   return (
-    <div className="relative flex items-end gap-2 border-t border-gray-100 bg-surface p-3">
+    <div className="relative flex items-end gap-2 border-t border-stone-100 bg-surface p-3">
       <input ref={fileRef} type="file" accept="image/*,audio/*,video/*,application/pdf" className="hidden" onChange={pickFile} />
       <input ref={stickerRef} type="file" accept="image/*" className="hidden" onChange={pickSticker} />
 
       {/* Dropdown de menções */}
       {filtered.length > 0 && (
-        <div className="absolute bottom-16 left-3 z-30 w-64 overflow-hidden rounded-lg border border-gray-100 bg-surface py-1 shadow-xl">
+        <div className="absolute bottom-16 left-3 z-30 w-64 overflow-hidden rounded-lg border border-stone-100 bg-surface py-1 shadow-xl">
           <p className="px-3 py-1 text-[10px] font-semibold uppercase text-ink-soft">Mencionar</p>
           {filtered.map((c) => (
             <button
               key={c.phone}
               onClick={() => pickMention(c)}
-              className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm text-ink hover:bg-gray-50"
+              className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm text-ink hover:bg-stone-50"
             >
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-light text-[10px] font-semibold text-brand">
                 {c.name.slice(0, 2).toUpperCase()}
@@ -141,7 +141,7 @@ export function Composer({
         <button
           onClick={() => { setEmojiOpen((v) => !v); setAttachMenu(false); }}
           disabled={disabled || sending}
-          className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl bg-gray-100 text-ink-soft transition hover:bg-gray-200 disabled:opacity-40"
+          className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl bg-stone-100 text-ink-soft transition hover:bg-stone-200 disabled:opacity-40"
           title="Emojis"
         >
           <Smile size={18} />
@@ -152,7 +152,7 @@ export function Composer({
         <button
           onClick={() => setAttachMenu((v) => !v)}
           disabled={disabled || sending}
-          className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl bg-gray-100 text-ink-soft transition hover:bg-gray-200 disabled:opacity-40"
+          className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl bg-stone-100 text-ink-soft transition hover:bg-stone-200 disabled:opacity-40"
           title="Anexar"
         >
           <Paperclip size={18} />
@@ -160,20 +160,20 @@ export function Composer({
         {attachMenu && (
           <>
             <div className="fixed inset-0 z-10" onClick={() => setAttachMenu(false)} />
-            <div className="absolute bottom-12 left-0 z-20 w-44 overflow-hidden rounded-lg border border-gray-100 bg-surface py-1 text-sm shadow-xl">
-              <button onClick={() => { setAttachMenu(false); fileRef.current?.click(); }} className="flex w-full items-center gap-2 px-3 py-2 text-ink hover:bg-gray-50">
+            <div className="absolute bottom-12 left-0 z-20 w-44 overflow-hidden rounded-lg border border-stone-100 bg-surface py-1 text-sm shadow-xl">
+              <button onClick={() => { setAttachMenu(false); fileRef.current?.click(); }} className="flex w-full items-center gap-2 px-3 py-2 text-ink hover:bg-stone-50">
                 <FileUp size={15} /> Arquivo / mídia
               </button>
-              <button onClick={() => { setAttachMenu(false); stickerRef.current?.click(); }} className="flex w-full items-center gap-2 px-3 py-2 text-ink hover:bg-gray-50">
+              <button onClick={() => { setAttachMenu(false); stickerRef.current?.click(); }} className="flex w-full items-center gap-2 px-3 py-2 text-ink hover:bg-stone-50">
                 <Sticker size={15} /> Figurinha
               </button>
               {onSendLocation && (
-                <button onClick={() => { setAttachMenu(false); onSendLocation(); }} className="flex w-full items-center gap-2 px-3 py-2 text-ink hover:bg-gray-50">
+                <button onClick={() => { setAttachMenu(false); onSendLocation(); }} className="flex w-full items-center gap-2 px-3 py-2 text-ink hover:bg-stone-50">
                   <MapPin size={15} /> Localização
                 </button>
               )}
               {onSendContact && (
-                <button onClick={() => { setAttachMenu(false); onSendContact(); }} className="flex w-full items-center gap-2 px-3 py-2 text-ink hover:bg-gray-50">
+                <button onClick={() => { setAttachMenu(false); onSendContact(); }} className="flex w-full items-center gap-2 px-3 py-2 text-ink hover:bg-stone-50">
                   <UserPlus size={15} /> Contato
                 </button>
               )}
@@ -207,7 +207,7 @@ export function Composer({
         rows={1}
         placeholder={recording ? "Gravando áudio..." : "Digite uma mensagem... ( @ menciona em grupos )"}
         disabled={disabled || recording}
-        className="max-h-32 min-h-[42px] flex-1 resize-none rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-brand disabled:bg-gray-50"
+        className="max-h-32 min-h-[42px] flex-1 resize-none rounded-xl border border-stone-200 px-3 py-2 text-sm outline-none focus:border-brand disabled:bg-stone-50"
       />
 
       {text.trim() ? (

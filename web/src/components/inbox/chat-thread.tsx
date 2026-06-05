@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { UserCheck, CheckCircle2, Users, Bell, BellOff, Reply, X } from "lucide-react";
+import { UserCheck, CheckCircle2, Users, Bell, BellOff, Reply, X, ArrowLeft } from "lucide-react";
 import { MessageBubble } from "./message-bubble";
 import { Composer } from "./composer";
 import type { ConversationOverview, Message } from "@/lib/types";
@@ -22,6 +22,7 @@ export function ChatThread({
   onClose,
   onToggleMute,
   onType,
+  onBack,
   pending,
 }: {
   conversation: ConversationOverview;
@@ -39,6 +40,7 @@ export function ChatThread({
   onAssign: () => void;
   onClose: () => void;
   onToggleMute: () => void;
+  onBack?: () => void;
   pending?: boolean;
 }) {
   const endRef = useRef<HTMLDivElement>(null);
@@ -56,15 +58,21 @@ export function ChatThread({
 
   return (
     <div className="flex h-full flex-1 flex-col bg-canvas">
-      <header className="flex items-center justify-between border-b border-gray-100 bg-surface px-4 py-3">
-        <button onClick={onOpenPanel} className="flex items-center gap-3 rounded-lg p-1 text-left transition hover:bg-gray-50" title="Ver dados">
+      <header className="flex items-center justify-between border-b border-stone-100 bg-surface px-3 py-2 sm:px-4 sm:py-3">
+        <div className="flex items-center gap-1">
+          {onBack && (
+            <button onClick={onBack} className="mr-1 rounded-lg p-1.5 text-ink-soft hover:bg-stone-100 lg:hidden" aria-label="Voltar para conversas">
+              <ArrowLeft size={20} />
+            </button>
+          )}
+          <button onClick={onOpenPanel} className="flex items-center gap-2 rounded-lg p-1 text-left transition hover:bg-stone-50 sm:gap-3" title="Ver dados">
           {conversation.contact_avatar ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={conversation.contact_avatar} alt="" className="h-10 w-10 rounded-full object-cover" />
           ) : (
             <div
               className={`flex h-10 w-10 items-center justify-center rounded-full text-xs font-semibold ${
-                isGroup ? "bg-brand-light text-brand" : "bg-gray-200 text-gray-600"
+                isGroup ? "bg-brand-light text-brand" : "bg-stone-200 text-stone-600"
               }`}
             >
               {isGroup ? <Users size={18} /> : title.slice(0, 2).toUpperCase()}
@@ -82,17 +90,18 @@ export function ChatThread({
             </p>
             <p className="text-xs text-ink-soft">
               {isGroup ? "Conversa de grupo" : conversation.contact_phone} ·{" "}
-              <span className={isMeta ? "text-blue-600" : "text-gray-600"}>
+              <span className={isMeta ? "text-blue-600" : "text-stone-600"}>
                 {conversation.channel_name}
               </span>
             </p>
           </div>
         </button>
-        <div className="flex gap-2">
+        </div>
+        <div className="flex gap-1 sm:gap-2">
           <button
             onClick={onToggleMute}
             title={muted ? "Reativar notificações" : "Silenciar conversa"}
-            className="flex items-center gap-1 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-ink hover:bg-gray-200"
+            className="hidden items-center gap-1 rounded-lg bg-stone-100 px-3 py-1.5 text-xs font-medium text-ink hover:bg-stone-200 sm:flex"
           >
             {muted ? <BellOff size={14} /> : <Bell size={14} />}
             {muted ? "Silenciado" : "Silenciar"}
@@ -101,7 +110,7 @@ export function ChatThread({
             <>
               <button
                 onClick={onAssign}
-                className="flex items-center gap-1 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-ink hover:bg-gray-200"
+                className="flex items-center gap-1 rounded-lg bg-stone-100 px-2 py-1.5 text-xs font-medium text-ink hover:bg-stone-200 sm:px-3"
               >
                 <UserCheck size={14} /> Assumir
               </button>
@@ -114,7 +123,7 @@ export function ChatThread({
             </>
           )}
           {conversation.status === "closed" && (
-            <span className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs text-ink-soft">Encerrado</span>
+            <span className="rounded-lg bg-stone-100 px-3 py-1.5 text-xs text-ink-soft">Encerrado</span>
           )}
         </div>
       </header>
@@ -158,7 +167,7 @@ export function ChatThread({
       </div>
 
       {replyTo && (
-        <div className="flex items-center gap-2 border-t border-gray-100 bg-brand-light/40 px-4 py-2 text-xs">
+        <div className="flex items-center gap-2 border-t border-stone-100 bg-brand-light/40 px-4 py-2 text-xs">
           <Reply size={14} className="text-brand" />
           <div className="min-w-0 flex-1">
             <p className="font-medium text-brand">Respondendo</p>

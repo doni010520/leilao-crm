@@ -5,7 +5,7 @@ import type { Channel } from "@/lib/types";
 export function ChannelCard({ channel, action }: { channel: Channel; action?: React.ReactNode }) {
   const isMeta = channel.type === "meta_cloud";
   return (
-    <Card className="flex items-center gap-4">
+    <Card className="flex items-center gap-3 p-3 sm:gap-4 sm:p-5">
       <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-500 text-white">
         <WhatsAppGlyph />
         <span
