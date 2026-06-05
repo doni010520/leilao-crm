@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5">
+<meta name="description" content="ImobLeilão CRM — CRM + Agente de IA no WhatsApp para imobiliárias de leilão. Atende leads 24/7, qualifica e fecha mais arremates.">
+<title>ImobLeilão CRM — Sua imobiliária vendendo 24h. Mais arremates, menos correria.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  --brand:#1a3c34;--brand-dark:#0f2920;--brand-light:#e8f0ee;
+  --accent:#c8911f;--accent-light:#fdf6e8;--accent-hover:#b07d16;
+  --canvas:#f5f3ef;--surface:#ffffff;
+  --ink:#14211d;--ink-soft:#5e6e68;--ink-faint:#94a09b;
+  --border:rgba(26,60,52,.1);--border-strong:rgba(26,60,52,.18);
+  --radius:12px;--radius-lg:20px;
+  --shadow-sm:0 1px 3px rgba(20,33,29,.06);
+  --shadow-md:0 4px 20px rgba(20,33,29,.08);
+  --shadow-lg:0 12px 40px rgba(20,33,29,.12);
+  --font-display:'Bricolage Grotesque',Georgia,serif;
+  --font-body:'Manrope',system-ui,sans-serif;
+}
+
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+body{font-family:var(--font-body);background:var(--canvas);color:var(--ink);font-size:16px;line-height:1.6;overflow-x:hidden}
+
+h1,h2,h3,h4{font-family:var(--font-display);line-height:1.15;letter-spacing:-.02em}
+
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+button{font-family:inherit}
+
+/* ── UTILITY ── */
+.container{max-width:1080px;margin:0 auto;padding:0 20px}
+@media(min-width:768px){.container{padding:0 32px}}
+
+/* ── BUTTONS ── */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:14px 32px;border:none;border-radius:60px;cursor:pointer;
+  font-family:var(--font-body);font-size:1rem;font-weight:600;
+  text-decoration:none;transition:all .2s ease;
+  -webkit-tap-highlight-color:transparent;
+  min-height:52px;
+}
+.btn-accent{
+  background:var(--accent);color:#fff;
+  box-shadow:0 2px 12px rgba(200,145,31,.25);
+}
+.btn-accent:hover{background:var(--accent-hover);transform:translateY(-1px);box-shadow:0 4px 20px rgba(200,145,31,.3)}
+.btn-accent:active{transform:translateY(0)}
+.btn-outline{
+  background:transparent;color:var(--brand);
+  border:1.5px solid var(--border-strong);
+}
+.btn-outline:hover{background:var(--brand-light);border-color:var(--brand)}
+.btn-white{background:#fff;color:var(--brand);box-shadow:var(--shadow-sm)}
+.btn-white:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.btn-lg{padding:18px 40px;font-size:1.05rem;min-height:58px}
+
+/* ── REVEAL ── */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
+.reveal.vis{opacity:1;transform:translateY(0)}
+.reveal-d1{transition-delay:.08s}.reveal-d2{transition-delay:.16s}.reveal-d3{transition-delay:.24s}
+
+/* ── NAV ── */
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  background:rgba(245,243,239,.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  transition:box-shadow .3s;
+}
+.nav.scrolled{box-shadow:var(--shadow-sm)}
+.nav-inner{
+  display:flex;align-items:center;justify-content:space-between;
+  max-width:1080px;margin:0 auto;padding:12px 20px;
+}
+@media(min-width:768px){.nav-inner{padding:14px 32px}}
+.logo{display:flex;align-items:center;gap:8px}
+.logo-icon{
+  width:36px;height:36px;border-radius:10px;
+  background:var(--brand);
+  display:flex;align-items:center;justify-content:center;
+}
+.logo-icon svg{width:20px;height:20px}
+.logo-text{font-family:var(--font-display);font-size:1.1rem;font-weight:700;color:var(--ink)}
+.logo-text span{color:var(--accent)}
+.nav .btn{padding:10px 22px;font-size:.88rem;min-height:42px}
+
+/* ── HERO ── */
+.hero{
+  position:relative;min-height:100vh;min-height:100svh;
+  display:flex;align-items:flex-end;
+  padding:100px 0 0;overflow:hidden;
+}
+.hero-bg{
+  position:absolute;inset:0;z-index:0;
+  background:url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80') center/cover no-repeat;
+}
+.hero-bg::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(
+    to bottom,
+    rgba(15,41,32,.55) 0%,
+    rgba(15,41,32,.7) 40%,
+    rgba(15,41,32,.92) 100%
+  );
+}
+.hero-content{
+  position:relative;z-index:1;
+  max-width:1080px;margin:0 auto;padding:0 20px 60px;
+  width:100%;
+}
+@media(min-width:768px){.hero-content{padding:0 32px 80px}}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:8px 16px;border-radius:60px;
+  background:rgba(255,255,255,.12);backdrop-filter:blur(8px);
+  border:1px solid rgba(255,255,255,.15);
+  font-size:.82rem;color:rgba(255,255,255,.9);font-weight:500;
+  margin-bottom:24px;
+}
+.hero-badge .dot{
+  width:8px;height:8px;border-radius:50%;background:#22c55e;
+  box-shadow:0 0 8px rgba(34,197,94,.5);
+  animation:blink 2.5s infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.hero h1{
+  font-size:clamp(2rem,6vw,3.5rem);font-weight:800;
+  color:#fff;max-width:640px;margin-bottom:20px;
+  text-shadow:0 2px 20px rgba(0,0,0,.15);
+}
+.hero .sub{
+  font-size:clamp(.95rem,2.2vw,1.15rem);
+  color:rgba(255,255,255,.8);max-width:500px;
+  line-height:1.7;margin-bottom:32px;
+}
+.hero .cta-row{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.hero .cta-note{font-size:.78rem;color:rgba(255,255,255,.5);margin-top:12px}
+
+/* ── TRUST ── */
+.trust{
+  padding:32px 0;border-bottom:1px solid var(--border);
+  background:var(--surface);
+}
+.trust-inner{
+  display:flex;flex-direction:column;align-items:center;gap:16px;
+  text-align:center;
+}
+@media(min-width:600px){.trust-inner{flex-direction:row;justify-content:center;gap:12px}}
+.trust-label{font-size:.72rem;text-transform:uppercase;letter-spacing:.14em;color:var(--ink-faint);font-weight:600}
+.trust-logos{display:flex;align-items:center;gap:20px;flex-wrap:wrap;justify-content:center}
+.trust-logos span{
+  font-family:var(--font-display);font-size:.9rem;font-weight:700;
+  color:var(--ink-soft);opacity:.55;
+  padding:6px 0;
+}
+.trust-sep{width:4px;height:4px;border-radius:50%;background:var(--ink-faint);opacity:.3;flex-shrink:0}
+
+/* ── SECTIONS ── */
+section{padding:72px 0}
+@media(min-width:768px){section{padding:100px 0}}
+.section-label{
+  font-family:var(--font-body);font-size:.72rem;
+  text-transform:uppercase;letter-spacing:.16em;font-weight:700;
+  color:var(--accent);margin-bottom:12px;
+}
+.section-title{
+  font-size:clamp(1.6rem,4vw,2.4rem);font-weight:800;
+  color:var(--ink);margin-bottom:12px;
+}
+.section-sub{font-size:1rem;color:var(--ink-soft);max-width:480px;margin-bottom:48px;line-height:1.7}
+
+/* ── PAIN ── */
+.pain{background:var(--surface)}
+.pain-grid{display:flex;flex-direction:column;gap:16px}
+@media(min-width:768px){.pain-grid{flex-direction:row;gap:20px}}
+.pain-card{
+  flex:1;padding:28px 24px;border-radius:var(--radius);
+  border:1px solid var(--border);
+  background:var(--canvas);
+  position:relative;overflow:hidden;
+  transition:border-color .2s,transform .2s;
+}
+.pain-card:hover{border-color:var(--border-strong);transform:translateY(-2px)}
+.pain-card::before{
+  content:'';position:absolute;top:0;left:0;width:3px;height:100%;
+  background:linear-gradient(to bottom,var(--accent),transparent);opacity:.5;
+  border-radius:0 2px 2px 0;
+}
+.pain-num{
+  font-family:var(--font-display);font-size:3rem;font-weight:800;
+  color:var(--brand);opacity:.15;line-height:1;margin-bottom:12px;
+}
+.pain-card p{font-size:.95rem;font-weight:500;color:var(--ink);line-height:1.55;padding-left:12px}
+
+/* ── STEPS ── */
+.steps-grid{display:flex;flex-direction:column;gap:24px;counter-reset:step}
+@media(min-width:768px){.steps-grid{flex-direction:row;gap:20px}}
+.step{
+  flex:1;counter-increment:step;
+  padding:32px 24px;border-radius:var(--radius);
+  background:var(--surface);border:1px solid var(--border);
+  box-shadow:var(--shadow-sm);
+  transition:box-shadow .2s,transform .2s;
+}
+.step:hover{box-shadow:var(--shadow-md);transform:translateY(-3px)}
+.step-num{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:40px;height:40px;border-radius:12px;
+  background:var(--brand);color:#fff;
+  font-family:var(--font-display);font-weight:800;font-size:1rem;
+  margin-bottom:20px;
+}
+.step h3{font-size:1.1rem;font-weight:700;margin-bottom:8px;color:var(--ink)}
+.step p{font-size:.9rem;color:var(--ink-soft);line-height:1.6}
+
+/* ── DEMO ── */
+.demo{background:var(--brand-dark);padding:72px 0;overflow:hidden}
+@media(min-width:768px){.demo{padding:100px 0}}
+.demo .section-label{color:var(--accent)}
+.demo .section-title{color:#fff}
+.demo .section-sub{color:rgba(255,255,255,.6)}
+.demo-layout{display:flex;flex-direction:column;align-items:center;gap:40px}
+@media(min-width:900px){.demo-layout{flex-direction:row;align-items:center;gap:64px}}
+.demo-text{flex:1}
+.demo-phone{flex-shrink:0}
+
+/* Phone mockup */
+.phone{
+  width:300px;border-radius:32px;overflow:hidden;
+  background:#0b141a;
+  border:6px solid #2a2a2a;
+  box-shadow:0 24px 80px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.05);
+  position:relative;
+}
+.phone::before{
+  content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);
+  width:80px;height:22px;border-radius:14px;background:#1a1a1a;z-index:10;
+}
+.phone-header{
+  background:#1f2c33;padding:42px 14px 10px;
+  display:flex;align-items:center;gap:10px;
+}
+.phone-back{color:#8696a0;font-size:1.2rem}
+.phone-avatar{
+  width:34px;height:34px;border-radius:50%;
+  background:linear-gradient(135deg,var(--brand),var(--accent));
+  display:flex;align-items:center;justify-content:center;
+  font-size:.7rem;font-weight:800;color:#fff;
+}
+.phone-info .name{font-size:.85rem;font-weight:600;color:#e9edef}
+.phone-info .status{font-size:.68rem;color:#8696a0}
+.chat{
+  padding:14px 10px 16px;min-height:280px;
+  display:flex;flex-direction:column;gap:6px;
+  background:#0b141a url("data:image/svg+xml,%3Csvg width='40' height='40' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='40' height='40' fill='%230b141a'/%3E%3Ccircle cx='20' cy='20' r='.5' fill='%23ffffff' fill-opacity='.02'/%3E%3C/svg%3E");
+}
+.bubble{
+  max-width:82%;padding:7px 10px 4px;border-radius:8px;
+  font-size:.82rem;line-height:1.45;position:relative;
+}
+.bubble .time{font-size:.6rem;color:#8696a0;text-align:right;margin-top:2px}
+.b-in{background:#1f2c33;color:#e9edef;align-self:flex-start;border-top-left-radius:2px}
+.b-out{background:#005c4b;color:#e9edef;align-self:flex-end;border-top-right-radius:2px}
+.demo-caption{
+  margin-top:24px;font-family:var(--font-display);
+  font-size:1.15rem;font-weight:700;color:rgba(255,255,255,.7);
+  font-style:italic;text-align:center;
+}
+@media(min-width:900px){.demo-caption{text-align:left}}
+
+/* ── FEATURES ── */
+.feat-grid{display:grid;grid-template-columns:1fr;gap:16px}
+@media(min-width:600px){.feat-grid{grid-template-columns:1fr 1fr;gap:18px}}
+.feat{
+  padding:28px 24px;border-radius:var(--radius);
+  background:var(--surface);border:1px solid var(--border);
+  box-shadow:var(--shadow-sm);
+  transition:box-shadow .2s,transform .2s;
+}
+.feat:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
+.feat-icon{
+  width:44px;height:44px;border-radius:12px;margin-bottom:16px;
+  display:flex;align-items:center;justify-content:center;
+}
+.feat-icon svg{width:22px;height:22px}
+.feat-icon.green{background:var(--brand-light);color:var(--brand)}
+.feat-icon.gold{background:var(--accent-light);color:var(--accent)}
+.feat h3{font-family:var(--font-display);font-size:1rem;font-weight:700;margin-bottom:6px}
+.feat p{font-size:.88rem;color:var(--ink-soft);line-height:1.55}
+
+/* ── PRICING ── */
+.pricing{background:var(--surface)}
+.pricing-card{
+  max-width:460px;margin:0 auto;border-radius:var(--radius-lg);
+  overflow:hidden;background:var(--canvas);
+  border:2px solid var(--brand);
+  box-shadow:var(--shadow-lg);
+}
+.pricing-top{
+  background:var(--brand);padding:36px 28px;text-align:center;
+}
+.pricing-name{font-family:var(--font-display);font-size:1rem;font-weight:600;color:rgba(255,255,255,.7);margin-bottom:12px}
+.pricing-amount{font-family:var(--font-display);font-size:3.2rem;font-weight:800;color:#fff;line-height:1}
+.pricing-amount span{font-size:1rem;font-weight:500;color:rgba(255,255,255,.6)}
+.pricing-annual{font-size:.85rem;color:rgba(255,255,255,.55);margin-top:10px}
+.pricing-annual b{color:var(--accent)}
+.pricing-body{padding:32px 28px}
+.pricing-list{list-style:none;display:flex;flex-direction:column;gap:14px;margin-bottom:32px}
+.pricing-list li{display:flex;align-items:flex-start;gap:12px;font-size:.92rem;color:var(--ink-soft);line-height:1.5}
+.pricing-list svg{flex-shrink:0;margin-top:2px;color:var(--brand)}
+.pricing-cta{text-align:center}
+.pricing-cta .btn{width:100%}
+.pricing-guarantee{text-align:center;font-size:.8rem;color:var(--ink-faint);margin-top:16px;line-height:1.6}
+
+/* ── COMPARE ── */
+.compare-stack{display:flex;flex-direction:column;gap:16px;max-width:500px;margin:0 auto}
+.compare-card{
+  padding:24px;border-radius:var(--radius);
+  border:1px solid var(--border);background:var(--surface);
+}
+.compare-card.highlight{
+  border:2px solid var(--brand);background:var(--brand-light);
+  box-shadow:var(--shadow-md);
+}
+.compare-card .label{font-size:.72rem;text-transform:uppercase;letter-spacing:.14em;color:var(--ink-faint);font-weight:600;margin-bottom:8px}
+.compare-card.highlight .label{color:var(--brand)}
+.compare-items{display:flex;flex-direction:column;gap:8px}
+.compare-row{display:flex;justify-content:space-between;align-items:center;font-size:.9rem}
+.compare-row .name{color:var(--ink-soft)}
+.compare-row .val{font-weight:600;color:var(--ink)}
+.compare-card.highlight .compare-row .val{color:var(--brand)}
+.compare-total{
+  display:flex;justify-content:space-between;align-items:baseline;
+  padding-top:12px;margin-top:8px;border-top:1px solid var(--border);
+}
+.compare-total .name{font-weight:600;color:var(--ink)}
+.compare-total .val{font-family:var(--font-display);font-size:1.3rem;font-weight:800}
+.compare-card:not(.highlight) .compare-total .val{color:#dc2626;text-decoration:line-through;text-decoration-color:rgba(220,38,38,.4)}
+.compare-card.highlight .compare-total .val{color:var(--brand)}
+
+/* ── FAQ ── */
+.faq{background:var(--surface)}
+.faq-list{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:8px}
+.faq-item{
+  border:1px solid var(--border);border-radius:var(--radius);
+  overflow:hidden;background:var(--canvas);
+  transition:border-color .2s;
+}
+.faq-item.open{border-color:var(--border-strong)}
+.faq-q{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:20px 24px;cursor:pointer;min-height:60px;
+  font-family:var(--font-body);font-size:.95rem;font-weight:600;color:var(--ink);
+  background:none;border:none;width:100%;text-align:left;
+  -webkit-tap-highlight-color:transparent;
+  transition:color .2s;
+}
+.faq-q:hover{color:var(--brand)}
+.faq-chevron{
+  width:20px;height:20px;flex-shrink:0;
+  transition:transform .25s ease;color:var(--ink-faint);
+}
+.faq-item.open .faq-chevron{transform:rotate(180deg);color:var(--accent)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .35s ease}
+.faq-a-inner{padding:0 24px 20px;font-size:.9rem;color:var(--ink-soft);line-height:1.7}
+
+/* ── FINAL CTA ── */
+.final-cta{
+  text-align:center;padding:80px 20px;
+  background:var(--brand);position:relative;overflow:hidden;
+}
+.final-cta::before{
+  content:'';position:absolute;top:-50%;right:-20%;
+  width:500px;height:500px;border-radius:50%;
+  background:radial-gradient(circle,rgba(200,145,31,.12) 0%,transparent 70%);
+  pointer-events:none;
+}
+.final-cta h2{
+  font-size:clamp(1.6rem,4vw,2.4rem);font-weight:800;
+  color:#fff;margin-bottom:16px;position:relative;
+}
+.final-cta p{font-size:1.05rem;color:rgba(255,255,255,.65);margin-bottom:36px;position:relative}
+.final-cta .btn{position:relative}
+.final-cta .cta-note{font-size:.78rem;color:rgba(255,255,255,.4);margin-top:14px;position:relative}
+
+/* ── STICKY MOBILE CTA ── */
+.sticky-cta{
+  display:flex;position:fixed;bottom:0;left:0;right:0;z-index:90;
+  padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom));
+  background:rgba(245,243,239,.95);backdrop-filter:blur(12px);
+  border-top:1px solid var(--border);
+  transform:translateY(100%);transition:transform .3s ease;
+}
+.sticky-cta.show{transform:translateY(0)}
+.sticky-cta .btn{flex:1}
+@media(min-width:768px){.sticky-cta{display:none}}
+
+/* ── FOOTER ── */
+footer{
+  padding:32px 20px;border-top:1px solid var(--border);
+  text-align:center;background:var(--canvas);
+}
+footer p{font-size:.78rem;color:var(--ink-faint)}
+footer .links{margin-top:10px;display:flex;justify-content:center;gap:20px;flex-wrap:wrap}
+footer .links a{font-size:.76rem;color:var(--ink-faint);transition:color .2s}
+footer .links a:hover{color:var(--accent)}
+
+/* ── RESPONSIVE MOBILE-FIRST ── */
+@media(max-width:767px){
+  /* Nav */
+  .nav-inner{padding:10px 16px}
+  .logo-icon{width:32px;height:32px;border-radius:8px}
+  .logo-icon svg{width:17px;height:17px}
+  .logo-text{font-size:1rem}
+  .nav .btn{padding:8px 16px;font-size:.82rem;min-height:38px}
+
+  /* Hero */
+  .hero{min-height:auto;padding-top:72px}
+  .hero-content{padding:32px 18px 44px}
+  .hero h1{font-size:1.75rem;max-width:100%;margin-bottom:16px}
+  .hero .sub{font-size:.92rem;margin-bottom:24px}
+  .hero-badge{font-size:.75rem;padding:6px 14px;margin-bottom:20px}
+  .cta-row{flex-direction:column;gap:10px;width:100%}
+  .cta-row .btn{width:100%}
+  .hero .cta-note{font-size:.75rem;text-align:center}
+
+  /* Sections */
+  section{padding:56px 0}
+  .section-title{font-size:1.45rem;margin-bottom:10px}
+  .section-sub{font-size:.9rem;margin-bottom:36px}
+  .section-label{font-size:.68rem;margin-bottom:10px}
+
+  /* Trust */
+  .trust{padding:24px 0}
+  .trust-logos{gap:14px}
+  .trust-logos span{font-size:.8rem}
+  .trust-sep{width:3px;height:3px}
+
+  /* Pain cards */
+  .pain-grid{gap:12px}
+  .pain-card{padding:22px 20px}
+  .pain-num{font-size:2.4rem;margin-bottom:8px}
+  .pain-card p{font-size:.88rem;padding-left:8px}
+
+  /* Steps */
+  .steps-grid{gap:16px}
+  .step{padding:24px 20px}
+  .step-num{width:36px;height:36px;border-radius:10px;font-size:.9rem;margin-bottom:16px}
+  .step h3{font-size:1rem}
+  .step p{font-size:.86rem}
+
+  /* Demo */
+  .demo{padding:56px 0}
+  .demo-layout{gap:32px}
+  .demo-caption{font-size:1rem;text-align:center}
+  .phone{width:280px;border-radius:28px;border-width:5px}
+  .phone::before{width:70px;height:20px;border-radius:12px;top:6px}
+  .phone-header{padding:38px 12px 8px}
+  .phone-avatar{width:30px;height:30px;font-size:.65rem}
+  .phone-info .name{font-size:.8rem}
+  .phone-info .status{font-size:.65rem}
+  .chat{padding:10px 8px 14px;min-height:240px;gap:5px}
+  .bubble{font-size:.78rem;padding:6px 9px 3px;max-width:85%}
+  .bubble .time{font-size:.55rem}
+
+  /* Features */
+  .feat-grid{grid-template-columns:1fr;gap:12px}
+  .feat{padding:22px 20px}
+  .feat-icon{width:40px;height:40px;border-radius:10px;margin-bottom:12px}
+  .feat-icon svg{width:20px;height:20px}
+  .feat h3{font-size:.95rem}
+  .feat p{font-size:.84rem}
+
+  /* Pricing */
+  .pricing-card{border-radius:16px}
+  .pricing-top{padding:28px 22px}
+  .pricing-name{font-size:.9rem}
+  .pricing-amount{font-size:2.6rem}
+  .pricing-amount span{font-size:.9rem}
+  .pricing-annual{font-size:.8rem}
+  .pricing-body{padding:24px 20px}
+  .pricing-list{gap:12px;margin-bottom:28px}
+  .pricing-list li{font-size:.86rem;gap:10px}
+  .pricing-cta .btn{font-size:.95rem;padding:16px 24px}
+  .pricing-guarantee{font-size:.75rem;margin-top:14px}
+
+  /* Compare */
+  .compare-stack{gap:12px}
+  .compare-card{padding:20px}
+  .compare-row{font-size:.84rem}
+  .compare-total .val{font-size:1.15rem}
+
+  /* FAQ */
+  .faq-list{gap:6px}
+  .faq-q{padding:16px 18px;font-size:.9rem;min-height:52px}
+  .faq-chevron{width:18px;height:18px}
+  .faq-a-inner{padding:0 18px 16px;font-size:.85rem}
+
+  /* Final CTA */
+  .final-cta{padding:64px 18px}
+  .final-cta h2{font-size:1.4rem}
+  .final-cta p{font-size:.95rem;margin-bottom:28px}
+  .final-cta .btn{width:100%;font-size:.95rem}
+  .final-cta .cta-note{font-size:.72rem}
+
+  /* Footer — espaço pro sticky CTA */
+  footer{padding-bottom:80px}
+}
+
+/* Tablet */
+@media(min-width:768px) and (max-width:1023px){
+  .hero h1{font-size:2.6rem}
+  .hero-content{padding:0 28px 70px}
+  .phone{width:280px}
+}
+</style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav class="nav" id="nav">
+<div class="nav-inner">
+  <a href="#" class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </div>
+    <div class="logo-text">ImobLeilão <span>CRM</span></div>
+  </a>
+  <a href="#preco" class="btn btn-accent">Começar agora</a>
+</div>
+</nav>
+
+<!-- ── HERO ── -->
+<section class="hero">
+<div class="hero-bg" role="img" aria-label="Casa moderna"></div>
+<div class="hero-content">
+  <div class="hero-badge reveal">
+    <span class="dot"></span>
+    Usado por 127+ imobiliárias de leilão
+  </div>
+  <h1 class="reveal reveal-d1">Sua imobiliária vendendo 24h.<br>Mais arremates. Menos correria.</h1>
+  <p class="sub reveal reveal-d2">O CRM com agente de IA que atende seus leads de leilão no WhatsApp, qualifica e entrega só quem quer comprar de verdade.</p>
+  <div class="cta-row reveal reveal-d3">
+    <a href="#preco" class="btn btn-accent btn-lg">Começar agora</a>
+    <a href="#como-funciona" class="btn btn-white">Como funciona</a>
+  </div>
+  <p class="cta-note reveal reveal-d3">Garantia de 7 dias. Não gostou, devolvemos seu dinheiro.</p>
+</div>
+</section>
+
+<!-- ── TRUST ── -->
+<div class="trust">
+<div class="container">
+  <div class="trust-inner">
+    <span class="trust-label">Integrado com</span>
+    <div class="trust-logos">
+      <span>Caixa Econômica</span><span class="trust-sep"></span>
+      <span>Zuk</span><span class="trust-sep"></span>
+      <span>Superbid</span><span class="trust-sep"></span>
+      <span>WhatsApp Business</span>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ── DOR ── -->
+<section class="pain">
+<div class="container">
+  <div class="section-label reveal">O problema</div>
+  <h2 class="section-title reveal">Quantos leads você perdeu essa semana?</h2>
+  <p class="section-sub reveal">Se algum desses cenários parece familiar, você está deixando dinheiro na mesa.</p>
+  <div class="pain-grid">
+    <div class="pain-card reveal">
+      <div class="pain-num">01</div>
+      <p>Lead mandou mensagem às 22h. Você viu às 8h. Ele já fechou com outro.</p>
+    </div>
+    <div class="pain-card reveal reveal-d1">
+      <div class="pain-num">02</div>
+      <p>SDR custa R$ 2.000+/mês, trabalha 8h por dia e ainda erra o script.</p>
+    </div>
+    <div class="pain-card reveal reveal-d2">
+      <div class="pain-num">03</div>
+      <p>Sua gestão de leads é uma planilha do Google que ninguém atualiza.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ── COMO FUNCIONA ── -->
+<section id="como-funciona">
+<div class="container">
+  <div class="section-label reveal">Como funciona</div>
+  <h2 class="section-title reveal">Três passos. Cinco minutos.</h2>
+  <p class="section-sub reveal">Sem complicação, sem técnico, sem dor de cabeça.</p>
+  <div class="steps-grid">
+    <div class="step reveal">
+      <div class="step-num">1</div>
+      <h3>Conecte seu WhatsApp</h3>
+      <p>Em 5 minutos seu número está integrado. Sem burocracia, sem técnico.</p>
+    </div>
+    <div class="step reveal reveal-d1">
+      <div class="step-num">2</div>
+      <h3>A IA atende 24/7</h3>
+      <p>Qualifica, busca imóveis na base Caixa/Zuk e identifica o perfil do comprador. Dia e noite.</p>
+    </div>
+    <div class="step reveal reveal-d2">
+      <div class="step-num">3</div>
+      <h3>Você fecha o arremate</h3>
+      <p>Receba só os leads quentes, com score, perfil e histórico completo. Abra o app e feche.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ── DEMO ── -->
+<section class="demo">
+<div class="container">
+  <div class="demo-layout">
+    <div class="demo-text">
+      <div class="section-label reveal">Veja em ação</div>
+      <h2 class="section-title reveal" style="color:#fff">A IA conversando com um lead real</h2>
+      <p class="section-sub reveal" style="color:rgba(255,255,255,.6)">O agente entende de leilão: busca imóveis, calcula viabilidade e transfere o lead quente pro corretor.</p>
+      <p class="demo-caption reveal">Isso acontece sozinho.<br>Enquanto você dorme.</p>
+    </div>
+    <div class="demo-phone reveal">
+      <div class="phone">
+        <div class="phone-header">
+          <span class="phone-back">&larr;</span>
+          <div class="phone-avatar">IA</div>
+          <div class="phone-info">
+            <div class="name">ImobLeilão Agente</div>
+            <div class="status">online</div>
+          </div>
+        </div>
+        <div class="chat">
+          <div class="bubble b-in">
+            <div>Oi, vi um apto em leilão da Caixa no centro de SP. Ainda tá disponível?</div>
+            <div class="time">22:47</div>
+          </div>
+          <div class="bubble b-out">
+            <div>Encontrei 3 opções! O melhor: 2 quartos na Rua Augusta, R$ 185k (42% abaixo do mercado). Margem de lucro projetada: <b>54%</b> &#x1F7E2;</div>
+            <div class="time">22:47</div>
+          </div>
+          <div class="bubble b-in">
+            <div>Quero! Como faço?</div>
+            <div class="time">22:48</div>
+          </div>
+          <div class="bubble b-out">
+            <div>Transferindo para o corretor <b>Lucas</b>, especialista nessa região. Ele entra em contato em instantes!</div>
+            <div class="time">22:48</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ── FEATURES ── -->
+<section>
+<div class="container">
+  <div class="section-label reveal">Funcionalidades</div>
+  <h2 class="section-title reveal">Tudo que você precisa. Nada que não precisa.</h2>
+  <p class="section-sub reveal">Um sistema completo, feito sob medida pra quem vive de leilão.</p>
+  <div class="feat-grid">
+    <div class="feat reveal">
+      <div class="feat-icon green">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      </div>
+      <h3>Agente de IA no WhatsApp</h3>
+      <p>Atende, qualifica e busca imóveis 24/7. Sem limite de conversas.</p>
+    </div>
+    <div class="feat reveal reveal-d1">
+      <div class="feat-icon gold">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      </div>
+      <h3>Pipeline Kanban</h3>
+      <p>Visualize todos os negócios num quadro. Arraste e feche.</p>
+    </div>
+    <div class="feat reveal">
+      <div class="feat-icon green">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </div>
+      <h3>Base de Imóveis de Leilão</h3>
+      <p>Imóveis da Caixa, Zuk e Superbid atualizados. Com alertas automáticos.</p>
+    </div>
+    <div class="feat reveal reveal-d1">
+      <div class="feat-icon gold">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg>
+      </div>
+      <h3>Calculadora de Viabilidade</h3>
+      <p>Calcule lance, custos, margem e ROI em segundos.</p>
+    </div>
+    <div class="feat reveal">
+      <div class="feat-icon green">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22 6 12 13 2 6"/></svg>
+      </div>
+      <h3>Inbox em Tempo Real</h3>
+      <p>Todas as conversas em um lugar. Lead quente? Transferência instantânea.</p>
+    </div>
+    <div class="feat reveal reveal-d1">
+      <div class="feat-icon gold">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+      </div>
+      <h3>Até 5 Corretores</h3>
+      <p>Toda a equipe no mesmo sistema. Multi-canal, múltiplos números.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ── PRICING ── -->
+<section class="pricing" id="preco">
+<div class="container" style="text-align:center">
+  <div class="section-label reveal">Preço</div>
+  <h2 class="section-title reveal" style="margin-left:auto;margin-right:auto">Simples. Sem surpresas.</h2>
+  <p class="section-sub reveal" style="margin-left:auto;margin-right:auto">Um plano. Tudo incluso. Sem pegadinha.</p>
+  <div class="pricing-card reveal">
+    <div class="pricing-top">
+      <div class="pricing-name">ImobLeilão CRM</div>
+      <div class="pricing-amount">R$ 297<span>/mês</span></div>
+      <p class="pricing-annual">ou R$ 2.970/ano &mdash; <b>2 meses grátis</b></p>
+    </div>
+    <div class="pricing-body">
+      <ul class="pricing-list">
+        <li>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Agente de IA no WhatsApp &mdash; ilimitado
+        </li>
+        <li>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Pipeline Kanban de leads
+        </li>
+        <li>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Base de imóveis (Caixa, Zuk, Superbid)
+        </li>
+        <li>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Calculadora de viabilidade de arremate
+        </li>
+        <li>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Inbox em tempo real + lead quente
+        </li>
+        <li>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Qualificação automática (score + perfil)
+        </li>
+        <li>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Multi-canal &mdash; múltiplos números WhatsApp
+        </li>
+        <li>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Até 5 corretores + suporte WhatsApp
+        </li>
+      </ul>
+      <div class="pricing-cta">
+        <a href="#" class="btn btn-accent btn-lg">Começar agora</a>
+        <p class="pricing-guarantee">Garantia de 7 dias. Não gostou, devolvemos 100% do valor.</p>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ── COMPARE ── -->
+<section>
+<div class="container" style="text-align:center">
+  <div class="section-label reveal">Comparação</div>
+  <h2 class="section-title reveal" style="margin-left:auto;margin-right:auto">Quanto você gasta hoje?</h2>
+  <p class="section-sub reveal" style="margin-left:auto;margin-right:auto">Junte duas ferramentas separadas ou use uma que já vem pronta.</p>
+  <div class="compare-stack reveal">
+    <div class="compare-card">
+      <div class="label">Hoje (comprando separado)</div>
+      <div class="compare-items">
+        <div class="compare-row"><span class="name">CRM imobiliário</span><span class="val">R$ 130-200/mês</span></div>
+        <div class="compare-row"><span class="name">Chatbot IA WhatsApp</span><span class="val">R$ 220-400/mês</span></div>
+        <div class="compare-row"><span class="name">Integração</span><span class="val">Você que se vira</span></div>
+        <div class="compare-row"><span class="name">Nicho leilão</span><span class="val">Genérico</span></div>
+      </div>
+      <div class="compare-total">
+        <span class="name">Total</span>
+        <span class="val">R$ 350-600/mês</span>
+      </div>
+    </div>
+    <div class="compare-card highlight">
+      <div class="label">ImobLeilão CRM</div>
+      <div class="compare-items">
+        <div class="compare-row"><span class="name">CRM + IA + Leilão</span><span class="val">Tudo incluso</span></div>
+        <div class="compare-row"><span class="name">Integração</span><span class="val">Já integrado</span></div>
+        <div class="compare-row"><span class="name">Nicho</span><span class="val">100% leilão</span></div>
+      </div>
+      <div class="compare-total">
+        <span class="name">Total</span>
+        <span class="val">R$ 297/mês</span>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ── FAQ ── -->
+<section class="faq">
+<div class="container" style="text-align:center">
+  <div class="section-label reveal">Dúvidas</div>
+  <h2 class="section-title reveal" style="margin-left:auto;margin-right:auto">Perguntas frequentes</h2>
+  <p class="section-sub reveal" style="margin-left:auto;margin-right:auto">Se sua dúvida não estiver aqui, manda no WhatsApp.</p>
+  <div class="faq-list">
+    <div class="faq-item reveal">
+      <button class="faq-q" aria-expanded="false">
+        Preciso de conhecimento técnico?
+        <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="faq-a"><div class="faq-a-inner">Zero. Se você sabe usar WhatsApp, sabe usar o ImobLeilão CRM. Conectar seu número leva 5 minutos.</div></div>
+    </div>
+    <div class="faq-item reveal">
+      <button class="faq-q" aria-expanded="false">
+        Meu WhatsApp pode ser banido?
+        <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="faq-a"><div class="faq-a-inner">Usamos a API oficial do WhatsApp Business (Meta) e APIs homologadas. Seu número fica seguro.</div></div>
+    </div>
+    <div class="faq-item reveal">
+      <button class="faq-q" aria-expanded="false">
+        Funciona pra imobiliária pequena?
+        <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="faq-a"><div class="faq-a-inner">Foi FEITO para imobiliária pequena. De 1 a 5 corretores, sem complicação. Você não precisa de equipe de TI.</div></div>
+    </div>
+    <div class="faq-item reveal">
+      <button class="faq-q" aria-expanded="false">
+        E se eu não gostar?
+        <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="faq-a"><div class="faq-a-inner">Garantia de 7 dias. Se não gostar, devolvemos 100% do valor. Risco zero.</div></div>
+    </div>
+    <div class="faq-item reveal">
+      <button class="faq-q" aria-expanded="false">
+        A IA realmente qualifica bem?
+        <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="faq-a"><div class="faq-a-inner">O agente é treinado especificamente em leilão de imóveis. Ele entende lance, arremate, edital, desocupação, financiamento com FGTS. Não é um chatbot genérico.</div></div>
+    </div>
+    <div class="faq-item reveal">
+      <button class="faq-q" aria-expanded="false">
+        Quantas conversas a IA pode atender?
+        <svg class="faq-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="faq-a"><div class="faq-a-inner">Ilimitadas. Sem teto, sem cobrança extra. Pode mandar 10 ou 10.000 leads que a IA atende todos.</div></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ── FINAL CTA ── -->
+<section class="final-cta">
+<div class="container">
+  <h2 class="reveal">Seus concorrentes já usam IA.<br>E você?</h2>
+  <p class="reveal reveal-d1">Ative seu vendedor de IA agora e pare de perder leads.</p>
+  <div class="reveal reveal-d2">
+    <a href="#preco" class="btn btn-accent btn-lg">Começar agora</a>
+    <p class="cta-note">R$ 297/mês. Garantia de 7 dias ou seu dinheiro de volta.</p>
+  </div>
+</div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+<div class="container">
+  <p>ImobLeilão CRM &copy; 2025. Todos os direitos reservados.</p>
+  <div class="links">
+    <a href="#">Termos de Uso</a>
+    <a href="#">Política de Privacidade</a>
+    <a href="#">Contato</a>
+  </div>
+</div>
+</footer>
+
+<!-- ── STICKY MOBILE CTA ── -->
+<div class="sticky-cta" id="stickyCta">
+  <a href="#preco" class="btn btn-accent">Começar agora</a>
+</div>
+
+<script>
+// Reveal on scroll
+const obs = new IntersectionObserver(es => {
+  es.forEach(e => { if(e.isIntersecting){e.target.classList.add('vis');obs.unobserve(e.target)} })
+},{threshold:.12,rootMargin:'0px 0px -30px 0px'});
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// FAQ
+document.querySelectorAll('.faq-q').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const item = btn.parentElement;
+    const a = item.querySelector('.faq-a');
+    const open = item.classList.contains('open');
+    document.querySelectorAll('.faq-item.open').forEach(i => {
+      i.classList.remove('open');
+      i.querySelector('.faq-q').setAttribute('aria-expanded','false');
+      i.querySelector('.faq-a').style.maxHeight = '0';
+    });
+    if(!open){
+      item.classList.add('open');
+      btn.setAttribute('aria-expanded','true');
+      a.style.maxHeight = a.scrollHeight + 'px';
+    }
+  });
+});
+
+// Nav shadow on scroll
+const nav = document.getElementById('nav');
+const sticky = document.getElementById('stickyCta');
+let lastY = 0;
+window.addEventListener('scroll', () => {
+  const y = window.scrollY;
+  nav.classList.toggle('scrolled', y > 40);
+  // Show sticky after scrolling past hero
+  if(window.innerWidth < 768){
+    sticky.classList.toggle('show', y > window.innerHeight * 0.7);
+  }
+  lastY = y;
+},{passive:true});
+
+// Smooth scroll
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const t = document.querySelector(a.getAttribute('href'));
+    if(t) t.scrollIntoView({behavior:'smooth',block:'start'});
+  });
+});
+</script>
+</body>
+</html>
