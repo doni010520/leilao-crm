@@ -233,7 +233,6 @@ export function QrConnectModal({
                   <p className="mt-2 text-[10px] text-ink-soft">O código expira em 60 segundos. Se não funcionar, gere um novo.</p>
                 )}
                 {err && <p className="mt-2 text-xs text-danger">{err}</p>}
-                {err && dbg && <p className="mt-2 break-all text-[10px] font-mono text-ink-soft/70">{dbg}</p>}
               </>
             )}
             <p className="mt-3 text-[11px] text-ink-soft">Aguardando leitura...</p>
