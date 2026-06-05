@@ -10,6 +10,24 @@ import {
 
 const QUICK_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 
+const URL_REGEX = /(https?:\/\/[^\s<]+)/g;
+function Linkify({ text }: { text: string }) {
+  const parts = text.split(URL_REGEX);
+  return (
+    <>
+      {parts.map((part, i) =>
+        URL_REGEX.test(part) ? (
+          <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline break-all hover:text-blue-800">
+            {part}
+          </a>
+        ) : (
+          <span key={i}>{part}</span>
+        )
+      )}
+    </>
+  );
+}
+
 // Paleta de cores por participante (estilo WhatsApp) — determinística pelo nome.
 const AUTHOR_COLORS = [
   "#d32f2f", "#1976d2", "#388e3c", "#7b1fa2", "#c2185b", "#0097a7",
@@ -129,7 +147,7 @@ export function MessageBubble({
           ) : (
             message.content_type !== "text" && <p className="mb-1 text-xs opacity-80">[{message.content_type}]</p>
           )}
-          {message.body && <p className="whitespace-pre-wrap break-words">{message.body}</p>}
+          {message.body && <p className="whitespace-pre-wrap break-words"><Linkify text={message.body} /></p>}
           <div className={cn("mt-1 flex items-center justify-end gap-1 text-[10px]", out ? "text-white/70" : "text-ink-soft")}>
             {message.edited && <span className="italic">editada</span>}
             {time}
