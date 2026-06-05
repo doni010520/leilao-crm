@@ -47,7 +47,7 @@ export function ChannelsList({ channels }: { channels: Channel[] }) {
 
   return (
     <>
-      <div className="grid grid-cols-1 gap-2 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {channels.map((c) => {
           const clickable = c.type !== "meta_cloud"; // UAZAPI: clicar reabre conexão (QR/código)
           const menuBtn = (
@@ -82,6 +82,17 @@ export function ChannelsList({ channels }: { channels: Channel[] }) {
                     )}
                     <button onClick={() => onDisconnect(c.id)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-ink hover:bg-gray-50">
                       <Power size={14} /> Desconectar
+                    </button>
+                    <button onClick={async () => {
+                      setMenu(null);
+                      const newName = prompt("Novo nome do canal:", c.name);
+                      if (newName && newName !== c.name) {
+                        const { renameChannel } = await import("@/app/(app)/canais/actions");
+                        await renameChannel(c.id, newName);
+                        router.refresh();
+                      }
+                    }} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-ink hover:bg-gray-50">
+                      <Plug size={14} /> Editar nome
                     </button>
                     <button onClick={() => onDelete(c)} className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-danger hover:bg-red-50">
                       <Trash2 size={14} /> Excluir canal

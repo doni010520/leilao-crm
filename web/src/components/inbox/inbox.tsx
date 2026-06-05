@@ -45,25 +45,34 @@ import {
   markConversationRead,
   assignToMe,
   closeConversation,
+  transferConversation,
   toggleMute,
   fetchMessages,
   fetchConversations,
   openDirectConversation,
   resolveDirectContact,
+  getGroupInfo,
 } from "@/app/(app)/atendimento/actions";
-import type { ConversationOverview, Message } from "@/lib/types";
+import { CloseModal, TransferModal } from "./attendance-modals";
+import type { ConversationOverview, Message, Tag, Profile, Department } from "@/lib/types";
 
 export function Inbox({
   initialConversations,
   initialSelectedId,
   initialMessages,
   userId,
+  tags,
+  agents,
+  departments,
   live,
 }: {
   initialConversations: ConversationOverview[];
   initialSelectedId: string | null;
   initialMessages: Message[];
   userId: string | null;
+  tags: Tag[];
+  agents: Profile[];
+  departments: Department[];
   live: boolean;
 }) {
   const router = useRouter();
@@ -78,6 +87,9 @@ export function Inbox({
   const [draft, setDraft] = useState<ConversationOverview | null>(null);
   const [draftRealId, setDraftRealId] = useState<string | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
+  const [closing, setClosing] = useState(false);
+  const [transferring, setTransferring] = useState(false);
+  const [groupParticipants, setGroupParticipants] = useState<{ name: string; phone: string }[]>([]);
   const DRAFT_ID = "__draft__";
 
   // Notificação sonora: guarda o timestamp da mensagem recebida mais recente já "ouvida".
@@ -109,21 +121,52 @@ export function Inbox({
       setMessagesByConv((prev) => ({ ...prev, [id]: msgs }));
     }
     if (live) markConversationRead(id).catch(() => {});
+    // Se grupo, carrega participantes reais para menções.
+    const conv = conversations.find((c) => c.id === id);
+    if (conv?.is_group) {
+      getGroupInfo(id).then((g) => {
+        if (g?.participants) {
+          setGroupParticipants(g.participants.map((p) => ({ name: p.name ?? p.phone, phone: p.phone })));
+        }
+      }).catch(() => {});
+    } else {
+      setGroupParticipants([]);
+    }
   }
 
-  // Polling de segurança: atualiza a inbox a cada 5s (independe do Realtime).
+  // Polling rápido: lista de conversas a cada 2s (leve — só a view).
   useEffect(() => {
     if (!live) return;
     let cancel = false;
+    let busy = false;
     const tick = async () => {
+      if (busy) return; // não acumula se o anterior ainda está rodando
+      busy = true;
       try {
         const convs = await fetchConversations();
         if (!cancel && Array.isArray(convs)) {
           setConversations(convs);
           maybePing(convs);
         }
-        if (!cancel && selectedId) {
-          const msgs = await fetchMessages(selectedId);
+      } catch { /* silencioso */ }
+      busy = false;
+    };
+    tick();
+    const t = setInterval(tick, 2000);
+    return () => { cancel = true; clearInterval(t); };
+  }, [live]);
+
+  // Polling de mensagens da conversa aberta a cada 3s.
+  useEffect(() => {
+    if (!live || !selectedId) return;
+    let cancel = false;
+    let busy = false;
+    const tick = async () => {
+      if (busy) return;
+      busy = true;
+      try {
+        const msgs = await fetchMessages(selectedId);
+        if (!cancel) {
           setMessagesByConv((prev) => {
             const cur = prev[selectedId] ?? [];
             const lastCur = cur[cur.length - 1];
@@ -132,16 +175,12 @@ export function Inbox({
             return { ...prev, [selectedId]: msgs };
           });
         }
-      } catch {
-        /* silencioso */
-      }
+      } catch { /* silencioso */ }
+      busy = false;
     };
-    tick(); // primeira atualização imediata
-    const t = setInterval(tick, 4000);
-    return () => {
-      cancel = true;
-      clearInterval(t);
-    };
+    tick();
+    const t = setInterval(tick, 3000);
+    return () => { cancel = true; clearInterval(t); };
   }, [live, selectedId]);
 
   // Realtime: mensagens recebidas (apenas direção "in"; as enviadas são otimistas).
@@ -405,6 +444,9 @@ export function Inbox({
     const fd = new FormData();
     fd.set("conversationId", convId);
     fd.set("file", file);
+    // Legenda vinda do modal de preview (propriedade custom no File).
+    const caption = (file as File & { caption?: string }).caption;
+    if (caption) fd.set("caption", caption);
     if (asSticker) fd.set("kind", "sticker");
     startTransition(async () => {
       await sendMediaMessage(fd);
@@ -413,7 +455,10 @@ export function Inbox({
       setConversations((prev) => {
         const idx = prev.findIndex((c) => c.id === convId);
         if (idx < 0) return prev;
-        const updated = { ...prev[idx], last_message_at: new Date().toISOString(), last_message_direction: "out" as const };
+        const ml: Record<string, string> = { "image/": "📷 Foto", "video/": "🎥 Vídeo", "audio/": "🎵 Áudio" };
+        const mediaPreview = Object.entries(ml).find(([k]) => file.type.startsWith(k))?.[1] ?? "📄 Documento";
+        const cap = (file as File & { caption?: string }).caption;
+        const updated = { ...prev[idx], last_message_body: cap || mediaPreview, last_message_at: new Date().toISOString(), last_message_direction: "out" as const };
         return [updated, ...prev.filter((_, i) => i !== idx)];
       });
     });
@@ -428,11 +473,41 @@ export function Inbox({
   }
 
   function handleClose() {
+    if (!selectedId || selectedId === DRAFT_ID) return;
+    setClosing(true);
+  }
+
+  function confirmClose(opts: { reason: string; tagIds: string[]; sendSurvey: boolean }) {
     if (!selectedId) return;
-    setConversations((prev) =>
-      prev.map((c) => (c.id === selectedId ? { ...c, status: "closed" } : c)),
-    );
-    startTransition(() => closeConversation(selectedId));
+    const id = selectedId;
+    setClosing(false);
+    setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, status: "closed" } : c)));
+    startTransition(async () => {
+      await closeConversation(id, opts);
+      await refetch(id);
+    });
+  }
+
+  function handleTransfer() {
+    if (!selectedId || selectedId === DRAFT_ID) return;
+    setTransferring(true);
+  }
+
+  function confirmTransfer(opts: {
+    toUserId: string | null;
+    toDepartmentId: string | null;
+    internalNote: string;
+    customerMessage: string;
+  }) {
+    if (!selectedId) return;
+    const id = selectedId;
+    setTransferring(false);
+    startTransition(async () => {
+      await transferConversation(id, opts);
+      const convs = await fetchConversations();
+      setConversations(convs);
+      await refetch(id);
+    });
   }
 
   function handleToggleMute() {
@@ -446,8 +521,8 @@ export function Inbox({
 
   return (
     <div className="flex h-full">
-      {/* Conversation list: hidden on mobile when a conversation is selected */}
-      <div className={`${selectedId ? "hidden lg:block" : "block"} w-full lg:w-auto`}>
+      {/* Mobile: mostra lista OU chat. Desktop: ambos. */}
+      <div className={`${selectedId ? "hidden md:flex" : "flex"} h-full w-full md:w-auto`}>
         <ConversationList
           conversations={conversations}
           selectedId={selectedId}
@@ -456,8 +531,10 @@ export function Inbox({
       </div>
       {selected ? (
         <ChatThread
+          onBack={() => setSelectedId(null)}
           conversation={selected}
           messages={messages}
+          groupParticipants={groupParticipants}
           onSend={handleSend}
           onSendFile={handleSendFile}
           onSendLocation={handleSendLocation}
@@ -470,12 +547,12 @@ export function Inbox({
           onType={handleDraftType}
           onAssign={handleAssign}
           onClose={handleClose}
+          onTransfer={handleTransfer}
           onToggleMute={handleToggleMute}
-          onBack={() => setSelectedId(null)}
           pending={isPending}
         />
       ) : (
-        <div className="flex flex-1 items-center justify-center text-sm text-ink-soft">
+        <div className="hidden flex-1 items-center justify-center text-sm text-ink-soft md:flex">
           Selecione uma conversa para começar.
         </div>
       )}
@@ -486,6 +563,27 @@ export function Inbox({
           conversation={selected}
           onClose={() => setPanelOpen(false)}
           onOpenContact={handleOpenContact}
+        />
+      )}
+
+      {closing && selected && (
+        <CloseModal
+          tags={tags}
+          protocol={selected.protocol}
+          onConfirm={confirmClose}
+          onCancel={() => setClosing(false)}
+          pending={isPending}
+        />
+      )}
+
+      {transferring && selected && (
+        <TransferModal
+          agents={agents}
+          departments={departments}
+          currentUserId={userId}
+          onConfirm={confirmTransfer}
+          onCancel={() => setTransferring(false)}
+          pending={isPending}
         />
       )}
 
@@ -505,10 +603,10 @@ export function Inbox({
                 if (e.key === "Escape") setEditing(null);
               }}
               rows={3}
-              className="w-full resize-none rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-brand"
+              className="w-full resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-brand"
             />
             <div className="mt-4 flex justify-end gap-2">
-              <button onClick={() => setEditing(null)} className="rounded-lg bg-stone-100 px-4 py-2 text-sm font-medium text-ink hover:bg-stone-200">
+              <button onClick={() => setEditing(null)} className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-ink hover:bg-gray-200">
                 Cancelar
               </button>
               <button onClick={saveEdit} disabled={!editing.text.trim()} className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-dark disabled:opacity-40">

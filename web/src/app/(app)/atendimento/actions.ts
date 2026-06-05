@@ -158,6 +158,25 @@ export async function getContactDetails(conversationId: string): Promise<Contact
   return (c as ContactDetails) ?? null;
 }
 
+/** Histórico de atendimentos do contato desta conversa. */
+export async function getContactHistory(conversationId: string) {
+  if (isPreview()) return [];
+  const supabase = await createClient();
+  const { data: conv } = await supabase
+    .from("conversation_overview")
+    .select("contact_id")
+    .eq("id", conversationId)
+    .single();
+  if (!conv) return [];
+  const { data } = await supabase
+    .from("conversations")
+    .select("id, protocol, status, opened_at, closed_at")
+    .eq("contact_id", conv.contact_id)
+    .order("created_at", { ascending: false })
+    .limit(20);
+  return (data ?? []) as { id: string; protocol: string | null; status: string; opened_at: string | null; closed_at: string | null }[];
+}
+
 /** Salva nome, observações e campos personalizados (CRM) do contato. */
 export async function updateContactDetails(
   conversationId: string,
@@ -229,13 +248,19 @@ export async function sendMessage(
   replyToExternal?: string,
   mentions?: { name: string; phone: string }[],
 ) {
-  const body = text.trim();
+  let body = text.trim();
   if (!body) return { ok: false };
   if (isPreview()) return { ok: true }; // modo preview: client mantém otimista
 
   const session = await getSession();
   if (!session?.organization) throw new Error("Sessão inválida.");
   const supabase = await createClient();
+
+  // Identificar atendente: prefixa o nome se configurado.
+  const orgSettings = (session.organization.settings ?? {}) as Record<string, unknown>;
+  if (orgSettings.identify_agent && session.profile?.name) {
+    body = `*${session.profile.name}:*\n${body}`;
+  }
 
   const { data: conv } = await supabase
     .from("conversation_overview")
@@ -319,23 +344,112 @@ export async function sendMessage(
 export async function assignToMe(conversationId: string) {
   if (isPreview()) return;
   const session = await getSession();
-  if (!session) throw new Error("Sessão inválida.");
+  if (!session?.organization) throw new Error("Sessão inválida.");
   const supabase = await createClient();
   await supabase
     .from("conversations")
     .update({ assigned_user_id: session.userId, status: "open" })
     .eq("id", conversationId);
+
+  // Mensagem de atribuição (se configurado).
+  const orgSettings = (session.organization.settings ?? {}) as Record<string, unknown>;
+  if (orgSettings.auto_send_assign_msg && session.profile?.name) {
+    const { data: autoMsg } = await supabase.from("auto_messages")
+      .select("body").eq("organization_id", session.organization.id)
+      .eq("event", "agent_assign").eq("active", true).limit(1).maybeSingle();
+    if (autoMsg?.body) {
+      const text = autoMsg.body.replace(/@atendente_nome/g, session.profile.name);
+      await sendMessage(conversationId, text);
+    }
+  }
+
   revalidatePath("/atendimento");
 }
 
-export async function closeConversation(conversationId: string) {
-  if (isPreview()) return;
+export interface CloseOptions {
+  reason?: string;
+  tagIds?: string[];
+  sendSurvey?: boolean;
+}
+
+const DEFAULT_SURVEY =
+  "Sua opinião é muito importante! De 1 a 5, como você avalia o nosso atendimento? (responda apenas com o número)";
+
+/** Envia a pesquisa de satisfação (CSAT) ao cliente e marca a conversa como aguardando nota. */
+async function sendSatisfactionSurvey(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  orgId: string,
+  conversationId: string,
+) {
+  const { data: org } = await supabase.from("organizations").select("settings").eq("id", orgId).maybeSingle();
+  const csat = (org?.settings as { csat?: { message?: string } } | null)?.csat;
+  const text = csat?.message?.trim() || DEFAULT_SURVEY;
+  try {
+    const { to, channel } = await recipientFor(supabase, conversationId);
+    const res = await getProvider(channel).sendText({ to, text });
+    await supabase.from("messages").insert({
+      organization_id: orgId,
+      conversation_id: conversationId,
+      direction: "out",
+      sender_type: "system",
+      content_type: "text",
+      body: text,
+      status: "sent",
+      external_id: res.externalId ?? null,
+    });
+    await supabase.from("conversations").update({ awaiting_satisfaction: true }).eq("id", conversationId);
+  } catch (e) {
+    console.error("survey", e);
+  }
+}
+
+/** Encerra o atendimento: classificação (tags) + motivo + pesquisa opcional. */
+export async function closeConversation(conversationId: string, opts: CloseOptions = {}) {
+  if (isPreview()) return { ok: true };
+  const session = await getSession();
+  if (!session?.organization) throw new Error("Sessão inválida.");
   const supabase = await createClient();
+
+  // Classificação do atendimento (substitui as tags atuais).
+  if (opts.tagIds) {
+    await supabase.from("conversation_tags").delete().eq("conversation_id", conversationId);
+    if (opts.tagIds.length) {
+      await supabase
+        .from("conversation_tags")
+        .insert(opts.tagIds.map((tag_id) => ({ conversation_id: conversationId, tag_id })));
+    }
+  }
+
   await supabase
     .from("conversations")
-    .update({ status: "closed", closed_at: new Date().toISOString() })
+    .update({
+      status: "closed",
+      closed_at: new Date().toISOString(),
+      close_reason: opts.reason?.trim() || null,
+    })
     .eq("id", conversationId);
+
+  // Registro interno do encerramento (histórico, não vai ao cliente).
+  if (opts.reason?.trim()) {
+    await supabase.from("messages").insert({
+      organization_id: session.organization.id,
+      conversation_id: conversationId,
+      direction: "out",
+      sender_type: "system",
+      sender_id: session.userId,
+      content_type: "text",
+      body: `Atendimento encerrado — Motivo: ${opts.reason.trim()}`,
+      is_internal: true,
+      status: "sent",
+    });
+  }
+
+  if (opts.sendSurvey) {
+    await sendSatisfactionSurvey(supabase, session.organization.id, conversationId);
+  }
+
   revalidatePath("/atendimento");
+  return { ok: true };
 }
 
 function kindFromMime(mime: string): { kind: "image" | "audio" | "video" | "document"; content: ContentType } {
@@ -593,12 +707,148 @@ export async function toggleMute(conversationId: string, muted: boolean) {
   return { muted };
 }
 
-export async function transferConversation(conversationId: string, toUserId: string) {
-  if (isPreview()) return;
+export interface TransferOptions {
+  toUserId?: string | null;
+  toDepartmentId?: string | null;
+  internalNote?: string;
+  customerMessage?: string;
+}
+
+/**
+ * Transferência avançada: para uma pessoa e/ou departamento, com nota interna
+ * (só atendentes) e mensagem ao cliente (enviada de verdade).
+ */
+export async function transferConversation(conversationId: string, opts: TransferOptions) {
+  if (isPreview()) return { ok: true };
+  const session = await getSession();
+  if (!session?.organization) throw new Error("Sessão inválida.");
   const supabase = await createClient();
-  await supabase
-    .from("conversations")
-    .update({ assigned_user_id: toUserId, status: "open" })
-    .eq("id", conversationId);
+
+  const update: Record<string, unknown> = {};
+  if (opts.toDepartmentId !== undefined) update.department_id = opts.toDepartmentId || null;
+  if (opts.toUserId) {
+    update.assigned_user_id = opts.toUserId;
+    update.status = "open";
+  } else if (opts.toDepartmentId) {
+    // Volta para a fila do departamento, sem atendente específico.
+    update.assigned_user_id = null;
+    update.status = "queued";
+  }
+  if (Object.keys(update).length) {
+    await supabase.from("conversations").update(update).eq("id", conversationId);
+  }
+
+  // Nota interna de transferência (não vai ao cliente).
+  if (opts.internalNote?.trim()) {
+    await supabase.from("messages").insert({
+      organization_id: session.organization.id,
+      conversation_id: conversationId,
+      direction: "out",
+      sender_type: "system",
+      sender_id: session.userId,
+      content_type: "text",
+      body: opts.internalNote.trim(),
+      is_internal: true,
+      status: "sent",
+    });
+  }
+
+  // Mensagem ao cliente (enviada pelo provedor).
+  if (opts.customerMessage?.trim()) {
+    await sendMessage(conversationId, opts.customerMessage.trim());
+  }
+
   revalidatePath("/atendimento");
+  return { ok: true };
+}
+
+/** Fixa/desfixa uma conversa. */
+export async function togglePin(conversationId: string, pinned: boolean) {
+  if (isPreview()) return { pinned };
+  const supabase = await createClient();
+  await supabase.from("conversations").update({ pinned }).eq("id", conversationId);
+  revalidatePath("/atendimento");
+  return { pinned };
+}
+
+/** Arquiva/desarquiva uma conversa. */
+export async function toggleArchive(conversationId: string, archived: boolean) {
+  if (isPreview()) return { archived };
+  const supabase = await createClient();
+  await supabase.from("conversations").update({ archived }).eq("id", conversationId);
+  revalidatePath("/atendimento");
+  return { archived };
+}
+
+/** Busca conversas por protocolo (global). */
+export async function searchByProtocol(protocol: string) {
+  if (isPreview()) return [];
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("conversation_overview")
+    .select("id, protocol, contact_name, contact_phone, status")
+    .ilike("protocol", `%${protocol.trim()}%`)
+    .limit(20);
+  return data ?? [];
+}
+
+/** Ação SGP manual no painel do contato (2ª via, PIX, liberação, status). */
+export async function sgpAction(conversationId: string, action: string, contrato: number): Promise<string> {
+  if (isPreview()) return "Modo preview.";
+  const session = await getSession();
+  if (!session?.organization) throw new Error("Sessão inválida.");
+  const { sgpForOrg } = await import("@/lib/sgp");
+  const supabase = await createClient();
+  const sgp = await sgpForOrg(supabase as unknown as Parameters<typeof sgpForOrg>[0], session.organization.id);
+  if (!sgp) return "SGP não configurado. Cadastre a integração em Ajustes > Integrações.";
+  try {
+    switch (action) {
+      case "segunda_via": {
+        const r = await sgp.segundaVia({ contrato });
+        if (!r.ok) return r.mensagem ?? "Erro ao gerar 2ª via.";
+        const lines = r.faturas.map((f) =>
+          `Fatura ${f.fatura}: R$ ${f.valor?.toFixed(2)} (venc. ${f.vencimento})${f.linhaDigitavel ? `\nLinha: ${f.linhaDigitavel}` : ""}${f.link ? `\nLink: ${f.link}` : ""}`,
+        );
+        return lines.length ? lines.join("\n\n") : "Nenhuma fatura encontrada.";
+      }
+      case "pix": {
+        // Pega a 1ª fatura em aberto
+        const titulos = await sgp.titulosEmAberto({ contrato });
+        if (!titulos.length) return "Nenhuma fatura em aberto.";
+        const px = await sgp.gerarPix(titulos[0].fatura, contrato);
+        return px.codigoPix ?? "PIX não disponível para esta fatura.";
+      }
+      case "liberacao": {
+        const r = await sgp.liberacaoConfianca({ contrato });
+        return r.ok ? `Liberado! Protocolo: ${r.protocolo ?? "—"}` : (r.mensagem ?? "Não foi possível liberar.");
+      }
+      case "status": {
+        const r = await sgp.statusConexao({ contrato });
+        return r.online ? "Conexão ONLINE" : `Conexão OFFLINE${r.mensagem ? ` — ${r.mensagem}` : ""}`;
+      }
+      default:
+        return "Ação desconhecida.";
+    }
+  } catch (e) {
+    return `Erro SGP: ${(e as Error)?.message ?? "desconhecido"}`;
+  }
+}
+
+/** Remove um participante de um grupo WhatsApp. */
+export async function removeGroupParticipant(conversationId: string, phone: string): Promise<{ ok: boolean; error?: string }> {
+  if (isPreview()) return { ok: false, error: "Modo preview." };
+  const supabase = await createClient();
+  const { data: conv } = await supabase
+    .from("conversation_overview")
+    .select("channel_id, is_group, contact_jid, contact_phone")
+    .eq("id", conversationId)
+    .single();
+  if (!conv?.is_group) return { ok: false, error: "Não é um grupo." };
+  const { data: channel } = await supabase.from("channels").select("*").eq("id", conv.channel_id).single();
+  if (!channel) return { ok: false, error: "Canal não encontrado." };
+  const jid = (conv.contact_jid as string) || `${conv.contact_phone}@g.us`;
+  const provider = getProvider(channel as Channel);
+  if (!provider.removeGroupParticipant) return { ok: false, error: "Provedor não suporta remoção de participantes." };
+  const ok = await provider.removeGroupParticipant(jid, phone);
+  return ok ? { ok: true } : { ok: false, error: "Falha ao remover participante." };
 }

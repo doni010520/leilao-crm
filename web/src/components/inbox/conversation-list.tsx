@@ -17,7 +17,7 @@ const STATUS_DOT: Record<ConversationStatus, string> = {
   bot: "bg-violet-500",
   queued: "bg-amber-500",
   open: "bg-green-500",
-  closed: "bg-stone-400",
+  closed: "bg-gray-400",
 };
 
 export function ConversationList({
@@ -45,15 +45,15 @@ export function ConversationList({
   });
 
   return (
-    <div className="flex h-full w-80 shrink-0 flex-col border-r border-stone-100 bg-surface">
-      <div className="border-b border-stone-100 p-3">
+    <div className="flex h-full w-full shrink-0 flex-col border-r border-gray-100 bg-surface md:w-80">
+      <div className="border-b border-gray-100 p-3">
         <div className="relative">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-soft" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar conversa..."
-            className="w-full rounded-lg border border-stone-200 py-2 pl-9 pr-3 text-sm outline-none focus:border-brand"
+            className="w-full rounded-lg border border-gray-200 py-2 pl-9 pr-3 text-sm outline-none focus:border-brand"
           />
         </div>
         <div className="mt-2 flex gap-1 overflow-x-auto">
@@ -63,7 +63,7 @@ export function ConversationList({
               onClick={() => setFilter(f.key)}
               className={cn(
                 "whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium transition",
-                filter === f.key ? "bg-brand text-white" : "bg-stone-100 text-ink-soft hover:bg-stone-200",
+                filter === f.key ? "bg-brand text-white" : "bg-gray-100 text-ink-soft hover:bg-gray-200",
               )}
             >
               {f.label}
@@ -87,17 +87,31 @@ export function ConversationList({
           const time = c.last_message_at
             ? new Date(c.last_message_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
             : "";
+          // Rótulo de mídia (quando o body está vazio, mostra o tipo como o WhatsApp Web).
+          const mediaLabel: Record<string, string> = {
+            image: "📷 Foto",
+            video: "🎥 Vídeo",
+            audio: "🎵 Áudio",
+            document: "📄 Documento",
+            sticker: "🏷️ Figurinha",
+            location: "📍 Localização",
+            contact: "👤 Contato",
+            template: "📋 Template",
+          };
+          const bodyOrMedia = c.last_message_body
+            || (c.last_message_type ? mediaLabel[c.last_message_type] ?? `[${c.last_message_type}]` : "—");
           // Em grupos, prefixa a prévia com quem enviou a última mensagem.
           const preview =
             isGroup && c.last_message_author && c.last_message_direction === "in"
-              ? `${c.last_message_author.split(" ")[0]}: ${c.last_message_body ?? ""}`
-              : (c.last_message_body ?? "—");
+              ? `${c.last_message_author.split(" ")[0]}: ${bodyOrMedia}`
+              : bodyOrMedia;
+          const unread = (c.unread_count ?? 0) > 0;
           return (
             <button
               key={c.id}
               onClick={() => onSelect(c.id)}
               className={cn(
-                "flex w-full items-center gap-3 border-b border-stone-50 px-3 py-3 text-left transition hover:bg-stone-50",
+                "flex w-full items-center gap-3 border-b border-gray-50 px-3 py-3 text-left transition hover:bg-gray-50",
                 selectedId === c.id && "bg-brand-light hover:bg-brand-light",
               )}
             >
@@ -109,7 +123,7 @@ export function ConversationList({
                   <div
                     className={cn(
                       "flex h-10 w-10 items-center justify-center rounded-full text-xs font-semibold",
-                      isGroup ? "bg-brand-light text-brand" : "bg-stone-200 text-stone-600",
+                      isGroup ? "bg-brand-light text-brand" : "bg-gray-200 text-gray-600",
                     )}
                   >
                     {isGroup ? <Users size={18} /> : initials || "?"}
@@ -119,13 +133,20 @@ export function ConversationList({
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="flex min-w-0 items-center gap-1 truncate text-sm font-medium text-ink">
+                  <p className={cn("flex min-w-0 items-center gap-1 truncate text-sm", unread ? "font-bold text-ink" : "font-medium text-ink")}>
                     <span className="truncate">{title}</span>
                     {c.is_muted && <BellOff size={12} className="shrink-0 text-ink-soft" />}
                   </p>
-                  <span className="shrink-0 text-[10px] text-ink-soft">{time}</span>
+                  <span className={cn("shrink-0 text-[10px]", unread ? "font-semibold text-green-600" : "text-ink-soft")}>{time}</span>
                 </div>
-                <p className="truncate text-xs text-ink-soft">{preview}</p>
+                <div className="flex items-center gap-2">
+                  <p className={cn("min-w-0 flex-1 truncate text-xs", unread ? "font-semibold text-ink" : "text-ink-soft")}>{preview}</p>
+                  {unread && (
+                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-green-500 px-1 text-[10px] font-bold text-white">
+                      {c.unread_count! > 99 ? "99+" : c.unread_count}
+                    </span>
+                  )}
+                </div>
                 <p className="truncate text-[10px] text-ink-soft/70">{c.channel_name}</p>
               </div>
             </button>

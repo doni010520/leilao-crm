@@ -30,11 +30,47 @@ async function resolveMentions(db: DB, channel: Channel, groupJid: string, body:
     const { data: contacts } = await db.from("contacts").select("phone, name").in("phone", phones);
     for (const c of contacts ?? []) if (c.name) names.set(c.phone, c.name);
   }
-  return body.replace(/@(\d{5,})/g, (full, digits) => {
+  // Primeiro passo: resolver via participantes do grupo.
+  // Segundo passo (fallback): para LIDs não resolvidos, buscar em mensagens anteriores
+  // (author_lid → author_name) ou nos contatos por telefone.
+  const unresolved: string[] = [];
+  let result = body.replace(/@(\d{5,})/g, (full, digits) => {
     const phone = toPhone.get(digits) ?? digits;
     const name = names.get(phone);
-    return name ? `@${name}` : full;
+    if (name) return `@${name}`;
+    unresolved.push(digits);
+    return full;
   });
+
+  // Fallback: busca nomes em mensagens anteriores por author_lid ou nos contatos por phone.
+  if (unresolved.length) {
+    for (const digits of unresolved) {
+      // Tenta por author_lid (mensagens de grupo guardam o LID do autor)
+      const { data: msg } = await db
+        .from("messages")
+        .select("author_name")
+        .eq("author_lid", digits)
+        .not("author_name", "is", null)
+        .limit(1)
+        .maybeSingle();
+      if (msg?.author_name) {
+        result = result.split(`@${digits}`).join(`@${msg.author_name}`);
+        continue;
+      }
+      // Tenta por phone (caso seja um número real, não LID)
+      const { data: contact } = await db
+        .from("contacts")
+        .select("name")
+        .eq("phone", digits)
+        .not("name", "is", null)
+        .limit(1)
+        .maybeSingle();
+      if (contact?.name) {
+        result = result.split(`@${digits}`).join(`@${contact.name}`);
+      }
+    }
+  }
+  return result;
 }
 
 const MEDIA_TYPES = new Set(["image", "audio", "video", "document", "sticker"]);
@@ -83,15 +119,17 @@ export async function persistInbound(messages: InboundMessage[]) {
       if (dup) continue;
     }
 
-    // Contato/grupo (upsert por organização + telefone/id). Não sobrescreve um
-    // nome já existente com null.
+    // Contato/grupo (upsert por organização + telefone/id).
+    // Para mensagens fromMe (eco do celular) em 1:1, NÃO passamos nome —
+    // o chat.name do webhook vem com o nome do DONO, não do contato.
+    const contactName = (fromMe && !isGroup) ? null : (msg.contactName ?? null);
     const { data: contact } = await db
       .from("contacts")
       .upsert(
         {
           organization_id: org,
           phone: msg.from,
-          name: msg.contactName ?? null,
+          name: contactName,
           is_group: isGroup,
         },
         { onConflict: "organization_id,phone", ignoreDuplicates: false },
@@ -100,9 +138,10 @@ export async function persistInbound(messages: InboundMessage[]) {
       .single();
 
     // Nome e foto vêm no objeto `chat` do webhook (contato e grupo). Preenche o que faltar.
+    // Não usa chatName em fromMe 1:1 (viria o nome do dono, não do contato).
     if (contact) {
       const patch: Record<string, unknown> = {};
-      if (!contact.name && msg.chatName) patch.name = msg.chatName;
+      if (!contact.name && msg.chatName && !(fromMe && !isGroup)) patch.name = msg.chatName;
       if (isGroup && msg.chatJid) patch.chat_jid = msg.chatJid; // JID completo do grupo
       // Foto: re-hospeda no nosso Storage. "src" = caminho da URL do WhatsApp (sem query
       // de expiração) — muda quando a pessoa troca a foto → re-hospeda a nova.
@@ -226,12 +265,122 @@ export async function persistInbound(messages: InboundMessage[]) {
       .update({ last_message_at: new Date().toISOString() })
       .eq("id", conversationId);
 
+    // ====== CSAT: captura nota se aguardando satisfação ======
+    if (!fromMe && !isGroup && existing?.status === "closed") {
+      const { data: awaitingConv } = await db
+        .from("conversations")
+        .select("awaiting_satisfaction, survey_id")
+        .eq("id", conversationId)
+        .maybeSingle();
+      if (awaitingConv?.awaiting_satisfaction && body) {
+        const note = parseInt(body.trim(), 10);
+        if (note >= 1 && note <= 5) {
+          await db.from("conversations").update({
+            satisfaction: note,
+            awaiting_satisfaction: false,
+          }).eq("id", conversationId);
+          // Mensagem de agradecimento
+          const thanks = "Obrigado pela sua avaliação! Ficamos felizes em poder ajudar.";
+          const to = isGroup ? `${msg.from}@g.us` : msg.from;
+          await getProvider(channel as Channel).sendText({ to, text: thanks }).catch(() => {});
+          await db.from("messages").insert({
+            organization_id: org, conversation_id: conversationId,
+            direction: "out", sender_type: "system", content_type: "text",
+            body: thanks, status: "sent",
+          });
+          continue; // não precisa processar mais nada
+        }
+      }
+    }
+
+    // ====== Mensagens automáticas por evento ======
+    if (!fromMe && !isGroup) {
+      const autoSend = async (event: string) => {
+        const { data: am } = await db.from("auto_messages")
+          .select("body").eq("organization_id", org).eq("event", event).eq("active", true)
+          .or(`channel_id.eq.${channel.id},channel_id.is.null`)
+          .limit(1).maybeSingle();
+        if (am?.body) {
+          await getProvider(channel as Channel).sendText({ to: msg.from, text: am.body }).catch(() => {});
+          await db.from("messages").insert({
+            organization_id: org, conversation_id: conversationId,
+            direction: "out", sender_type: "system", content_type: "text",
+            body: am.body, status: "sent",
+          });
+        }
+        return !!am?.body;
+      };
+
+      if (isNew) {
+        // Horário de atendimento: checa se estamos fora do horário
+        const { data: hours } = await db.from("business_hours")
+          .select("day_of_week, start_time, end_time, active")
+          .eq("organization_id", org)
+          .eq("active", true);
+        if (hours && hours.length > 0) {
+          const { data: orgRow } = await db.from("organizations").select("settings").eq("id", org).maybeSingle();
+          const tz = ((orgRow?.settings as Record<string, unknown>)?.timezone_offset as number) ?? -3;
+          const now = new Date(Date.now() + tz * 3600000);
+          const dow = now.getUTCDay();
+          const hhmm = `${String(now.getUTCHours()).padStart(2, "0")}:${String(now.getUTCMinutes()).padStart(2, "0")}`;
+          const todayHours = hours.filter((h: { day_of_week: number }) => h.day_of_week === dow);
+          const inHours = todayHours.some((h: { start_time: string; end_time: string }) => hhmm >= h.start_time && hhmm <= h.end_time);
+          if (!inHours) {
+            await autoSend("out_of_hours");
+          }
+        }
+        // Boas-vindas (welcome) — só na 1ª msg da conversa
+        await autoSend("welcome");
+      }
+
+      // Ausência (away) — se o atendente atribuído está offline
+      if (existing && convStatus === "open" && existing.status === "open") {
+        const { data: assignedConv } = await db.from("conversations")
+          .select("assigned_user_id").eq("id", conversationId).maybeSingle();
+        if (assignedConv?.assigned_user_id) {
+          const { data: agent } = await db.from("profiles")
+            .select("status").eq("id", assignedConv.assigned_user_id).maybeSingle();
+          if (agent?.status === "offline") {
+            await autoSend("away");
+          }
+        }
+      }
+
+      // Fila de espera (queue_wait) — se conversa está em espera
+      if (convStatus === "queued") {
+        await autoSend("queue_wait");
+      }
+    }
+
+    // ====== Comando para encerrar (cliente envia palavra-chave) ======
+    if (!fromMe && !isGroup && body && (convStatus === "open" || convStatus === "queued")) {
+      const { data: orgRow2 } = await db.from("organizations").select("settings").eq("id", org).maybeSingle();
+      const orgSettings = (orgRow2?.settings ?? {}) as Record<string, unknown>;
+      const closeCmd = String(orgSettings.close_command ?? "").trim();
+      if (closeCmd) {
+        const keywords = closeCmd.split(",").map((k) => k.trim().toLowerCase()).filter(Boolean);
+        if (keywords.some((k) => body!.toLowerCase().includes(k))) {
+          const closeMsg = String(orgSettings.close_command_message ?? "").trim();
+          if (closeMsg) {
+            await getProvider(channel as Channel).sendText({ to: msg.from, text: closeMsg }).catch(() => {});
+            await db.from("messages").insert({
+              organization_id: org, conversation_id: conversationId,
+              direction: "out", sender_type: "system", content_type: "text",
+              body: closeMsg, status: "sent",
+            });
+          }
+          await db.from("conversations").update({ status: "closed", closed_at: new Date().toISOString() }).eq("id", conversationId);
+          continue;
+        }
+      }
+    }
+
     // Chatbot: roda só em mensagens recebidas (não nos ecos do próprio número).
     if (automation && !isGroup && !fromMe && (convStatus === "bot" || isNew)) {
       const r = await runChatbot(
         db,
         channel as Channel,
-        { id: conversationId, organization_id: org, channel_id: channel.id, contact_phone: msg.from, is_group: isGroup, bot_node_id: convBotNode },
+        { id: conversationId, organization_id: org, channel_id: channel.id, contact_phone: msg.from, contact_name: contact?.name ?? null, is_group: isGroup, bot_node_id: convBotNode },
         automation as { id: string; flow: { nodes: never[]; edges: never[] } },
         body ?? "",
       ).catch((e) => {

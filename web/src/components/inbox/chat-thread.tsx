@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { UserCheck, CheckCircle2, Users, Bell, BellOff, Reply, X, ArrowLeft } from "lucide-react";
+import { UserCheck, CheckCircle2, Users, Bell, BellOff, Reply, X, ArrowRightLeft, Hash, ArrowLeft } from "lucide-react";
 import { MessageBubble } from "./message-bubble";
 import { Composer } from "./composer";
 import type { ConversationOverview, Message } from "@/lib/types";
@@ -9,6 +9,7 @@ import type { ConversationOverview, Message } from "@/lib/types";
 export function ChatThread({
   conversation,
   messages,
+  groupParticipants,
   onSend,
   onSendFile,
   onSendLocation,
@@ -18,15 +19,17 @@ export function ChatThread({
   onDelete,
   onAuthorClick,
   onOpenPanel,
+  onBack,
   onAssign,
   onClose,
+  onTransfer,
   onToggleMute,
   onType,
-  onBack,
   pending,
 }: {
   conversation: ConversationOverview;
   messages: Message[];
+  groupParticipants?: { name: string; phone: string }[];
   onSend: (text: string, replyId?: string, mentions?: { name: string; phone: string }[]) => void;
   onSendFile: (file: File, asSticker?: boolean) => void;
   onType?: () => void;
@@ -37,10 +40,11 @@ export function ChatThread({
   onDelete: (m: Message) => void;
   onAuthorClick: (m: Message) => void;
   onOpenPanel: () => void;
+  onBack?: () => void;
   onAssign: () => void;
   onClose: () => void;
+  onTransfer: () => void;
   onToggleMute: () => void;
-  onBack?: () => void;
   pending?: boolean;
 }) {
   const endRef = useRef<HTMLDivElement>(null);
@@ -58,72 +62,57 @@ export function ChatThread({
 
   return (
     <div className="flex h-full flex-1 flex-col bg-canvas">
-      <header className="flex items-center justify-between border-b border-stone-100 bg-surface px-3 py-2 sm:px-4 sm:py-3">
-        <div className="flex items-center gap-1">
+      <header className="shrink-0 border-b border-gray-100 bg-surface">
+        {/* Linha 1: avatar + nome + protocolo */}
+        <div className="flex items-center gap-2 px-3 pt-2.5 pb-1 md:px-4">
           {onBack && (
-            <button onClick={onBack} className="mr-1 rounded-lg p-1.5 text-ink-soft hover:bg-stone-100 lg:hidden" aria-label="Voltar para conversas">
+            <button onClick={onBack} className="shrink-0 rounded-lg p-1.5 text-ink-soft hover:bg-gray-100 md:hidden" title="Voltar">
               <ArrowLeft size={20} />
             </button>
           )}
-          <button onClick={onOpenPanel} className="flex items-center gap-2 rounded-lg p-1 text-left transition hover:bg-stone-50 sm:gap-3" title="Ver dados">
-          {conversation.contact_avatar ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={conversation.contact_avatar} alt="" className="h-10 w-10 rounded-full object-cover" />
-          ) : (
-            <div
-              className={`flex h-10 w-10 items-center justify-center rounded-full text-xs font-semibold ${
-                isGroup ? "bg-brand-light text-brand" : "bg-stone-200 text-stone-600"
-              }`}
-            >
-              {isGroup ? <Users size={18} /> : title.slice(0, 2).toUpperCase()}
+          <button onClick={onOpenPanel} className="flex min-w-0 flex-1 items-center gap-3 rounded-lg text-left transition hover:bg-gray-50 p-1" title="Ver dados">
+            {conversation.contact_avatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={conversation.contact_avatar} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover" />
+            ) : (
+              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${isGroup ? "bg-brand-light text-brand" : "bg-gray-200 text-gray-600"}`}>
+                {isGroup ? <Users size={16} /> : title.slice(0, 2).toUpperCase()}
+              </div>
+            )}
+            <div className="min-w-0">
+              <p className="flex items-center gap-1.5 truncate text-sm font-semibold text-ink">
+                <span className="truncate">{title}</span>
+                {isGroup && <span className="shrink-0 rounded bg-brand-light px-1 py-0.5 text-[9px] font-medium text-brand">Grupo</span>}
+                {muted && <BellOff size={12} className="shrink-0 text-ink-soft" />}
+              </p>
+              <p className="truncate text-[11px] text-ink-soft">
+                {isGroup ? "Conversa de grupo" : conversation.contact_phone}
+                {" · "}{conversation.channel_name}
+                {conversation.protocol && <span className="ml-1 font-mono text-[10px]">#{conversation.protocol}</span>}
+              </p>
             </div>
-          )}
-          <div>
-            <p className="flex items-center gap-1.5 text-sm font-semibold text-ink">
-              {title}
-              {isGroup && (
-                <span className="rounded bg-brand-light px-1.5 py-0.5 text-[10px] font-medium text-brand">
-                  Grupo
-                </span>
-              )}
-              {muted && <BellOff size={13} className="text-ink-soft" />}
-            </p>
-            <p className="text-xs text-ink-soft">
-              {isGroup ? "Conversa de grupo" : conversation.contact_phone} ·{" "}
-              <span className={isMeta ? "text-blue-600" : "text-stone-600"}>
-                {conversation.channel_name}
-              </span>
-            </p>
-          </div>
-        </button>
+          </button>
         </div>
-        <div className="flex gap-1 sm:gap-2">
-          <button
-            onClick={onToggleMute}
-            title={muted ? "Reativar notificações" : "Silenciar conversa"}
-            className="hidden items-center gap-1 rounded-lg bg-stone-100 px-3 py-1.5 text-xs font-medium text-ink hover:bg-stone-200 sm:flex"
-          >
-            {muted ? <BellOff size={14} /> : <Bell size={14} />}
-            {muted ? "Silenciado" : "Silenciar"}
+        {/* Linha 2: ações */}
+        <div className="flex flex-wrap items-center gap-1.5 px-4 pb-2">
+          <button onClick={onToggleMute} title={muted ? "Reativar" : "Silenciar"} className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-1 text-[11px] font-medium text-ink hover:bg-gray-200">
+            {muted ? <BellOff size={12} /> : <Bell size={12} />} {muted ? "Silenciado" : "Silenciar"}
           </button>
           {conversation.status !== "closed" && (
             <>
-              <button
-                onClick={onAssign}
-                className="flex items-center gap-1 rounded-lg bg-stone-100 px-2 py-1.5 text-xs font-medium text-ink hover:bg-stone-200 sm:px-3"
-              >
-                <UserCheck size={14} /> Assumir
+              <button onClick={onAssign} className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-1 text-[11px] font-medium text-ink hover:bg-gray-200">
+                <UserCheck size={12} /> Assumir
               </button>
-              <button
-                onClick={onClose}
-                className="flex items-center gap-1 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-danger hover:bg-red-100"
-              >
-                <CheckCircle2 size={14} /> Encerrar
+              <button onClick={onTransfer} className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-1 text-[11px] font-medium text-ink hover:bg-gray-200">
+                <ArrowRightLeft size={12} /> Transferir
+              </button>
+              <button onClick={onClose} className="inline-flex items-center gap-1 rounded-md bg-red-50 px-2 py-1 text-[11px] font-medium text-danger hover:bg-red-100">
+                <CheckCircle2 size={12} /> Encerrar
               </button>
             </>
           )}
           {conversation.status === "closed" && (
-            <span className="rounded-lg bg-stone-100 px-3 py-1.5 text-xs text-ink-soft">Encerrado</span>
+            <span className="rounded-md bg-gray-100 px-2 py-1 text-[11px] text-ink-soft">Encerrado</span>
           )}
         </div>
       </header>
@@ -139,6 +128,15 @@ export function ChatThread({
             if (mm.external_id) byExt.set(mm.external_id.split(":").pop()!, mm);
           }
           return messages.map((m) => {
+            if (m.is_internal) {
+              return (
+                <div key={m.id} className="flex justify-center px-6 py-1">
+                  <div className="max-w-md rounded-lg bg-amber-50 px-3 py-1.5 text-center text-xs text-amber-800 ring-1 ring-amber-100">
+                    <span className="font-medium">Nota interna</span> · {m.body}
+                  </div>
+                </div>
+              );
+            }
             let quotedAuthor: string | null | undefined = m.reply_author;
             let quotedExcerpt: string | null | undefined = m.reply_excerpt;
             if (m.reply_to_external) {
@@ -167,7 +165,7 @@ export function ChatThread({
       </div>
 
       {replyTo && (
-        <div className="flex items-center gap-2 border-t border-stone-100 bg-brand-light/40 px-4 py-2 text-xs">
+        <div className="flex items-center gap-2 border-t border-gray-100 bg-brand-light/40 px-4 py-2 text-xs">
           <Reply size={14} className="text-brand" />
           <div className="min-w-0 flex-1">
             <p className="font-medium text-brand">Respondendo</p>
@@ -189,18 +187,21 @@ export function ChatThread({
         onSendContact={onSendContact}
         onType={onType}
         mentionCandidates={
-          conversation.is_group
-            ? Array.from(
-                new Map(
-                  messages
-                    .filter((m) => m.author_name && m.author_phone)
-                    .map((m) => [m.author_phone!, { name: m.author_name!, phone: m.author_phone! }]),
-                ).values(),
-              )
-            : undefined
+          conversation.is_group && groupParticipants?.length
+            ? groupParticipants
+            : conversation.is_group
+              ? Array.from(
+                  new Map(
+                    messages
+                      .filter((m) => m.author_name && m.author_phone)
+                      .map((m) => [m.author_phone!, { name: m.author_name!, phone: m.author_phone! }]),
+                  ).values(),
+                )
+              : undefined
         }
         disabled={conversation.status === "closed"}
         sending={pending}
+        focusTrigger={replyTo}
       />
     </div>
   );

@@ -41,14 +41,14 @@ export function EmojiPicker({ onPick, onClose }: { onPick: (e: string) => void; 
   return (
     <>
       <div className="fixed inset-0 z-10" onClick={onClose} />
-      <div className="absolute bottom-12 left-0 z-20 w-72 rounded-xl border border-stone-100 bg-surface shadow-xl">
-        <div className="flex border-b border-stone-100 px-1">
+      <div className="absolute bottom-12 left-0 z-20 w-72 rounded-xl border border-gray-100 bg-surface shadow-xl">
+        <div className="flex border-b border-gray-100 px-1">
           {CATEGORIES.map((c, i) => (
             <button
               key={c.key}
               onClick={() => setCat(i)}
               title={c.key}
-              className={`flex-1 rounded-md py-1.5 text-lg transition ${i === cat ? "bg-brand-light" : "hover:bg-stone-100"}`}
+              className={`flex-1 rounded-md py-1.5 text-lg transition ${i === cat ? "bg-brand-light" : "hover:bg-gray-100"}`}
             >
               {c.icon}
             </button>
@@ -59,7 +59,7 @@ export function EmojiPicker({ onPick, onClose }: { onPick: (e: string) => void; 
             <button
               key={`${e}-${i}`}
               onClick={() => onPick(e)}
-              className="rounded p-1 text-xl transition hover:bg-stone-100"
+              className="rounded p-1 text-xl transition hover:bg-gray-100"
             >
               {e}
             </button>
