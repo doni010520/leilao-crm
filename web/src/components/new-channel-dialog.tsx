@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui";
+import { Portal } from "@/components/portal";
 import { createChannel } from "@/app/(app)/canais/actions";
 import { QrConnectModal } from "@/components/qr-connect-modal";
 import { MetaConnectButton } from "@/components/meta-connect-button";
@@ -44,6 +45,7 @@ export function NewChannelDialog() {
       </Button>
 
       {open && (
+        <Portal>
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={() => setOpen(false)}>
           <div className="w-full max-w-md rounded-card bg-surface p-6 shadow-2xl animate-fade-up" onClick={e => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
@@ -117,9 +119,11 @@ export function NewChannelDialog() {
             </form>
           </div>
         </div>
+        </Portal>
       )}
 
       {qrChannel && (
+        <Portal>
         <QrConnectModal
           channelId={qrChannel.id}
           initialQr={qrChannel.qr}
@@ -133,6 +137,7 @@ export function NewChannelDialog() {
             router.refresh();
           }}
         />
+        </Portal>
       )}
     </>
   );
