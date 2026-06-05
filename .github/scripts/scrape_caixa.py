@@ -182,7 +182,7 @@ async def upsert_to_supabase(props: list[dict], supabase_url: str, supabase_key:
         "Authorization": f"Bearer {supabase_key}",
         "Content-Type": "application/json",
     }
-    cols = ["external_id","fonte","tipo_leilao","banco","tipo_imovel","endereco",
+    cols = ["external_id","fonte","organization_id","tipo_leilao","banco","tipo_imovel","endereco",
             "bairro","cidade","estado","valor_avaliacao","lance_minimo","desconto_pct",
             "status","ocupacao","aceita_financiamento","url_original","praca"]
 
@@ -257,6 +257,7 @@ async def main():
     parser.add_argument("--estados", default="SP,RJ,MG")
     parser.add_argument("--supabase-url", required=True)
     parser.add_argument("--supabase-key", required=True)
+    parser.add_argument("--organization-id", default="", help="Assign properties to this org")
     args = parser.parse_args()
 
     estados = [s.strip() for s in args.estados.split(",") if s.strip()]
@@ -276,6 +277,10 @@ async def main():
         print(f"[{uf}] Parsed {len(props)} properties")
 
         if props:
+            # Assign org if provided
+            if args.organization_id:
+                for p in props:
+                    p["organization_id"] = args.organization_id
             count = await upsert_to_supabase(props, args.supabase_url, args.supabase_key)
             print(f"[{uf}] Upserted {count} properties to Supabase")
             total += count

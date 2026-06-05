@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { getSession } from "@/lib/auth";
 
 export async function createProperty(formData: FormData) {
   const supabase = await createClient();
@@ -66,4 +67,32 @@ export async function updateProperty(id: string, data: Record<string, unknown>) 
   if (error) throw new Error(error.message);
   revalidatePath("/imoveis");
   revalidatePath(`/imoveis/${id}`);
+}
+
+export async function runScraper(estados: string[]) {
+  const session = await getSession();
+  if (!session?.profile?.organization_id) throw new Error("Não autenticado");
+  const orgId = session.profile.organization_id;
+
+  // Call the agent's scraper endpoint
+  const agentUrl = process.env.AGENT_URL || "https://liriel-leilao-crm-agent.zsvt2k.easypanel.host";
+  const resp = await fetch(`${agentUrl}/scraper/run`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ estados, organization_id: orgId }),
+  });
+  if (!resp.ok) throw new Error("Erro ao acionar o scraper");
+  const data = await resp.json();
+  revalidatePath("/imoveis");
+  return data;
+}
+
+export async function getScraperStatus() {
+  const agentUrl = process.env.AGENT_URL || "https://liriel-leilao-crm-agent.zsvt2k.easypanel.host";
+  try {
+    const resp = await fetch(`${agentUrl}/scraper/status`, { cache: "no-store" });
+    return await resp.json();
+  } catch {
+    return { status: "error", message: "Agente não disponível" };
+  }
 }

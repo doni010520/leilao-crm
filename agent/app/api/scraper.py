@@ -18,6 +18,7 @@ _last_log: list[str] = []
 class ScrapeRequest(BaseModel):
     estados: list[str] = ["SP", "RJ", "MG", "PR", "RS", "BA"]
     fonte: str = "caixa"
+    organization_id: str | None = None
 
 
 class ScrapeResult(BaseModel):
@@ -26,14 +27,14 @@ class ScrapeResult(BaseModel):
     log: list[str] = []
 
 
-async def _run_scrape(estados: list[str]):
+async def _run_scrape(estados: list[str], organization_id: str | None = None):
     global _running, _last_log
     _running = True
     _last_log = []
     try:
         from scrapers.scraper import CaixaScraper
-        _last_log.append(f"Starting scraper for {estados}")
-        scraper = CaixaScraper(estados=estados)
+        _last_log.append(f"Starting scraper for {estados} (org={organization_id or 'none'})")
+        scraper = CaixaScraper(estados=estados, organization_id=organization_id)
         await scraper.run()
         _last_log.append("Scraper finished")
     except Exception as e:
@@ -47,7 +48,7 @@ async def _run_scrape(estados: list[str]):
 async def run_scraper(req: ScrapeRequest, bg: BackgroundTasks):
     if _running:
         return ScrapeResult(status="busy", message="Scraper já está rodando. Aguarde.")
-    bg.add_task(_run_scrape, req.estados)
+    bg.add_task(_run_scrape, req.estados, req.organization_id)
     return ScrapeResult(
         status="started",
         message=f"Scraper iniciado para {', '.join(req.estados)}. Os imóveis aparecerão na base em alguns minutos.",

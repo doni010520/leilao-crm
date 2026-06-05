@@ -4,6 +4,7 @@ import { useState } from "react";
 import { RefreshCw, Check, Clock, AlertTriangle, Globe, Building, ExternalLink } from "lucide-react";
 import { Button, Card } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import { runScraper } from "@/app/(app)/imoveis/actions";
 
 interface ScrapingSource {
   id: string;
@@ -95,14 +96,28 @@ export function ScrapingSources() {
     ));
   }
 
-  function runNow(id: string) {
+  async function runNow(id: string) {
     setRunning(id);
-    setTimeout(() => {
+    try {
+      // Map source id to estados
+      const estadosMap: Record<string, string[]> = {
+        caixa: ["SP","RJ","MG","PR","RS","BA","PE","CE","DF","GO"],
+        zuk: ["SP","RJ"],
+        superbid: ["SP","RJ"],
+        mega: ["SP","RJ","MG"],
+        sodre: ["SP"],
+      };
+      const estados = estadosMap[id] || ["SP"];
+      const result = await runScraper(estados);
       setSources(prev => prev.map(s =>
-        s.id === id ? { ...s, ultimaExecucao: new Date().toISOString(), totalImoveis: s.totalImoveis + Math.floor(Math.random() * 30 + 5) } : s
+        s.id === id ? { ...s, ultimaExecucao: new Date().toISOString(), status: "ativo" as const } : s
       ));
+      alert(result?.message || "Scraper iniciado! Os imóveis aparecerão em alguns minutos.");
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Erro ao acionar scraper");
+    } finally {
       setRunning(null);
-    }, 3000);
+    }
   }
 
   const totalAtivos = sources.filter(s => s.enabled).length;
