@@ -8,7 +8,6 @@ import {
   Users,
   Layers,
   Settings,
-  Tag,
   Building2,
   Home,
   Kanban,
@@ -22,6 +21,7 @@ export interface NavItem {
   href: string;
   label: string;
   icon: LucideIcon;
+  adminOnly?: boolean;
 }
 
 export interface NavGroup {
@@ -34,7 +34,7 @@ export const NAV: NavGroup[] = [
     title: "Geral",
     items: [
       { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { href: "/relatorios", label: "Relatórios", icon: BarChart3 },
+      { href: "/relatorios", label: "Relatórios", icon: BarChart3, adminOnly: true },
     ],
   },
   {
@@ -50,21 +50,31 @@ export const NAV: NavGroup[] = [
     title: "Atendimento",
     items: [
       { href: "/atendimento", label: "Inbox", icon: MessageSquareText },
-      { href: "/ajustes/ia", label: "Agente de IA", icon: Sparkles },
-      { href: "/canais", label: "Canais WhatsApp", icon: Radio },
-      { href: "/automacoes", label: "Automações", icon: Bot },
-      { href: "/campanhas", label: "Campanhas", icon: Megaphone },
+      { href: "/ajustes/ia", label: "Agente de IA", icon: Sparkles, adminOnly: true },
+      { href: "/canais", label: "Canais WhatsApp", icon: Radio, adminOnly: true },
+      { href: "/automacoes", label: "Automações", icon: Bot, adminOnly: true },
+      { href: "/campanhas", label: "Campanhas", icon: Megaphone, adminOnly: true },
     ],
   },
   {
     title: "Empresa",
     items: [
-      { href: "/empresa", label: "Dados da empresa", icon: Building2 },
-      { href: "/atendentes", label: "Atendentes", icon: Users },
-      { href: "/departamentos", label: "Departamentos", icon: Layers },
-      { href: "/ajustes", label: "Ajustes", icon: Settings },
+      { href: "/empresa", label: "Dados da empresa", icon: Building2, adminOnly: true },
+      { href: "/atendentes", label: "Atendentes", icon: Users, adminOnly: true },
+      { href: "/departamentos", label: "Departamentos", icon: Layers, adminOnly: true },
+      { href: "/ajustes", label: "Ajustes", icon: Settings, adminOnly: true },
     ],
   },
 ];
+
+export function getNavForRole(role: string): NavGroup[] {
+  const isAdmin = role === "admin" || role === "supervisor";
+  return NAV
+    .map(group => ({
+      ...group,
+      items: group.items.filter(item => !item.adminOnly || isAdmin),
+    }))
+    .filter(group => group.items.length > 0);
+}
 
 export const ALL_ITEMS: NavItem[] = NAV.flatMap((g) => g.items);

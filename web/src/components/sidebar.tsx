@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogOut, PanelLeftClose, PanelLeftOpen } from "lucide-react";
-import { NAV } from "@/lib/nav";
+import { getNavForRole } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 
-export function Sidebar() {
+export function Sidebar({ role = "admin" }: { role?: string }) {
+  const navGroups = getNavForRole(role);
   const pathname = usePathname();
   const [pinned, setPinned] = useState(false);
   const [hovered, setHovered] = useState(false);
@@ -51,7 +52,7 @@ export function Sidebar() {
         </Link>
 
         <nav aria-label="Navegação principal" className="flex flex-1 flex-col gap-0.5 overflow-y-auto overflow-x-hidden">
-          {NAV.map((group) => (
+          {navGroups.map((group) => (
             <div key={group.title} className="flex flex-col gap-0.5 py-1">
               {expanded ? (
                 <span className="whitespace-nowrap px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-ink-soft/70">

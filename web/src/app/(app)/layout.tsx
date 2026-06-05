@@ -9,6 +9,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   let userName = "Adonias Souza";
   let orgName = "ImobLeilão CRM (preview)";
   let email: string | undefined;
+  let role = "admin";
 
   if (hasEnv) {
     const session = await getSession();
@@ -17,11 +18,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     userName = session.profile?.name || session.profile?.email || "Usuário";
     orgName = session.organization.name;
     email = session.profile?.email ?? undefined;
+    role = session.profile?.role ?? "agent";
   }
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar />
+      <Sidebar role={role} />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Topbar userName={userName} orgName={orgName} email={email} />
         {!hasEnv && (
