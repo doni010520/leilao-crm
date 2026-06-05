@@ -329,13 +329,29 @@ export async function sendMessage(
     await supabase.from("messages").update({ status: "failed" }).eq("id", msg!.id);
   }
 
+  // Se o atendente respondeu numa conversa que estava na IA, a IA para
+  // automaticamente (equivalente ao "atendente assumiu ao interagir").
+  const wasBot = conv.status === "bot";
   await supabase
     .from("conversations")
     .update({
       last_message_at: new Date().toISOString(),
-      status: conv.status === "closed" ? "open" : conv.status,
+      status: conv.status === "closed" ? "open" : wasBot ? "open" : conv.status,
+      ...(wasBot ? { ai_enabled: false, assigned_user_id: session.userId } : {}),
     })
     .eq("id", conversationId);
+  if (wasBot) {
+    await supabase.from("messages").insert({
+      organization_id: session.organization.id,
+      conversation_id: conversationId,
+      direction: "out",
+      sender_type: "system",
+      content_type: "text",
+      body: `IA pausada — ${session.profile?.name ?? "atendente"} assumiu ao responder.`,
+      is_internal: true,
+      status: "sent",
+    });
+  }
 
   revalidatePath("/atendimento");
   return { ok: true };
@@ -346,9 +362,10 @@ export async function assignToMe(conversationId: string) {
   const session = await getSession();
   if (!session?.organization) throw new Error("Sessão inválida.");
   const supabase = await createClient();
+  // Assumir = humano no comando → a IA para nesta conversa (não reengaja).
   await supabase
     .from("conversations")
-    .update({ assigned_user_id: session.userId, status: "open" })
+    .update({ assigned_user_id: session.userId, status: "open", ai_enabled: false })
     .eq("id", conversationId);
 
   // Mensagem de atribuição (se configurado).
@@ -698,6 +715,44 @@ export async function sendContactMessage(conversationId: string, fullName: strin
   return { ok: true };
 }
 
+/**
+ * Pausa (assume) ou reativa o atendimento por IA nesta conversa.
+ * - Pausar (enabled=false): atendente assume; o chatbot não reengaja, mesmo
+ *   em mensagem nova (block_return_to_bot por conversa).
+ * - Reativar (enabled=true): devolve a conversa para a automação (status "bot").
+ */
+export async function setConversationAi(conversationId: string, enabled: boolean) {
+  if (isPreview()) return { enabled };
+  const session = await getSession();
+  if (!session?.organization) throw new Error("Sessão inválida.");
+  const supabase = await createClient();
+
+  const patch: Record<string, unknown> = { ai_enabled: enabled };
+  if (enabled) {
+    patch.status = "bot";
+  } else {
+    patch.status = "open";
+    patch.assigned_user_id = session.userId;
+  }
+  await supabase.from("conversations").update(patch).eq("id", conversationId);
+
+  await supabase.from("messages").insert({
+    organization_id: session.organization.id,
+    conversation_id: conversationId,
+    direction: "out",
+    sender_type: "system",
+    content_type: "text",
+    body: enabled
+      ? "Atendimento devolvido para a IA."
+      : `IA pausada — atendimento assumido${session.profile?.name ? ` por ${session.profile.name}` : ""}.`,
+    is_internal: true,
+    status: "sent",
+  });
+
+  revalidatePath("/atendimento");
+  return { enabled };
+}
+
 /** Silencia/dessilencia uma conversa (grupo ou contato). */
 export async function toggleMute(conversationId: string, muted: boolean) {
   if (isPreview()) return { muted };
@@ -851,4 +906,14 @@ export async function removeGroupParticipant(conversationId: string, phone: stri
   if (!provider.removeGroupParticipant) return { ok: false, error: "Provedor não suporta remoção de participantes." };
   const ok = await provider.removeGroupParticipant(jid, phone);
   return ok ? { ok: true } : { ok: false, error: "Falha ao remover participante." };
+}
+
+// ── AI Control ──────────────────────────────────────────────────────────────
+
+export async function toggleAi(conversationId: string, enabled: boolean) {
+  "use server";
+  const supabase = await createClient();
+  await supabase.from("conversations").update({ ai_enabled: enabled }).eq("id", conversationId);
+  revalidatePath("/atendimento");
+  return { ai_enabled: enabled };
 }

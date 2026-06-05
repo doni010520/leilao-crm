@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import type { Message } from "@/lib/types";
 import {
   Check, CheckCheck, Clock, AlertCircle, FileText, Download,
-  Reply, SmilePlus, Pencil, Trash2, MoreVertical, X, Forward,
+  Reply, SmilePlus, Pencil, Trash2, MoreVertical, X, Forward, MessageSquare,
 } from "lucide-react";
 
 const QUICK_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
@@ -53,6 +53,7 @@ export function MessageBubble({
   onEdit,
   onDelete,
   onAuthorClick,
+  onReplyPrivate,
   quotedAuthor,
   quotedExcerpt,
 }: {
@@ -62,6 +63,7 @@ export function MessageBubble({
   onEdit?: (m: Message) => void;
   onDelete?: (m: Message) => void;
   onAuthorClick?: (m: Message) => void;
+  onReplyPrivate?: (m: Message) => void;
   quotedAuthor?: string | null;
   quotedExcerpt?: string | null;
 }) {
@@ -77,7 +79,7 @@ export function MessageBubble({
   if (message.is_deleted) {
     return (
       <div className={cn("flex", out ? "justify-end" : "justify-start")}>
-        <div className="max-w-[70%] rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm italic text-ink-soft">
+        <div className="max-w-[70%] rounded-2xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm italic text-ink-soft">
           🚫 Mensagem apagada
         </div>
       </div>
@@ -86,7 +88,7 @@ export function MessageBubble({
 
   return (
     <div className={cn("group flex items-end gap-1", out ? "justify-end" : "justify-start")}>
-      {out && <Actions {...{ message, menu, setMenu, emoji, setEmoji, onReply, onReact, onEdit, onDelete }} />}
+      {out && <Actions {...{ message, menu, setMenu, emoji, setEmoji, onReply, onReact, onEdit, onDelete, onReplyPrivate }} />}
       <div className="relative max-w-[70%]">
         <div
           onDoubleClick={() => onReply?.(message)}
@@ -95,7 +97,7 @@ export function MessageBubble({
             "rounded-2xl px-3 py-2 text-sm shadow-sm",
             out ? "rounded-br-sm bg-brand text-white" : "rounded-bl-sm bg-surface text-ink",
             message.sender_type === "bot" && "bg-violet-100 text-violet-900",
-            message.sender_type === "system" && "bg-gray-200 text-gray-600 italic",
+            message.sender_type === "system" && "bg-stone-200 text-stone-600 italic",
           )}
         >
           {!out && message.author_name &&
@@ -135,14 +137,14 @@ export function MessageBubble({
           </div>
         </div>
         {reactions.length > 0 && (
-          <div className={cn("absolute -bottom-2 flex gap-0.5 rounded-full border border-gray-100 bg-surface px-1 text-xs shadow-sm", out ? "right-2" : "left-2")}>
+          <div className={cn("absolute -bottom-2 flex gap-0.5 rounded-full border border-stone-100 bg-surface px-1 text-xs shadow-sm", out ? "right-2" : "left-2")}>
             {reactions.map((r, i) => (
               <span key={i} title={r.by}>{r.emoji}</span>
             ))}
           </div>
         )}
       </div>
-      {!out && <Actions {...{ message, menu, setMenu, emoji, setEmoji, onReply, onReact, onEdit, onDelete }} />}
+      {!out && <Actions {...{ message, menu, setMenu, emoji, setEmoji, onReply, onReact, onEdit, onDelete, onReplyPrivate }} />}
 
       {lightbox && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 p-4" onClick={() => setLightbox(null)}>
@@ -172,28 +174,29 @@ export function MessageBubble({
 }
 
 function Actions({
-  message, menu, setMenu, emoji, setEmoji, onReply, onReact, onEdit, onDelete,
+  message, menu, setMenu, emoji, setEmoji, onReply, onReact, onEdit, onDelete, onReplyPrivate,
 }: {
   message: Message; menu: boolean; setMenu: (v: boolean) => void; emoji: boolean; setEmoji: (v: boolean) => void;
   onReply?: (m: Message) => void; onReact?: (m: Message, e: string) => void; onEdit?: (m: Message) => void; onDelete?: (m: Message) => void;
+  onReplyPrivate?: (m: Message) => void;
 }) {
   const out = message.direction === "out";
   return (
     <div className="relative flex shrink-0 items-center self-center opacity-0 transition group-hover:opacity-100">
-      <button onClick={() => { setEmoji(!emoji); setMenu(false); }} className="rounded-full p-1 text-ink-soft hover:bg-gray-100" title="Reagir">
+      <button onClick={() => { setEmoji(!emoji); setMenu(false); }} className="rounded-full p-1 text-ink-soft hover:bg-stone-100" title="Reagir">
         <SmilePlus size={15} />
       </button>
-      <button onClick={() => onReply?.(message)} className="rounded-full p-1 text-ink-soft hover:bg-gray-100" title="Responder">
+      <button onClick={() => onReply?.(message)} className="rounded-full p-1 text-ink-soft hover:bg-stone-100" title="Responder">
         <Reply size={15} />
       </button>
-      <button onClick={() => { setMenu(!menu); setEmoji(false); }} className="rounded-full p-1 text-ink-soft hover:bg-gray-100" title="Mais">
+      <button onClick={() => { setMenu(!menu); setEmoji(false); }} className="rounded-full p-1 text-ink-soft hover:bg-stone-100" title="Mais">
         <MoreVertical size={15} />
       </button>
 
       {emoji && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setEmoji(false)} />
-          <div className="absolute bottom-7 z-20 flex gap-1 rounded-full border border-gray-100 bg-surface px-2 py-1 shadow-lg">
+          <div className="absolute bottom-7 z-20 flex gap-1 rounded-full border border-stone-100 bg-surface px-2 py-1 shadow-lg">
             {QUICK_EMOJIS.map((e) => (
               <button key={e} onClick={() => { onReact?.(message, e); setEmoji(false); }} className="text-lg hover:scale-125 transition">{e}</button>
             ))}
@@ -203,12 +206,17 @@ function Actions({
       {menu && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setMenu(false)} />
-          <div className="absolute bottom-7 z-20 w-36 overflow-hidden rounded-lg border border-gray-100 bg-surface py-1 text-sm shadow-xl">
-            <button onClick={() => { onReply?.(message); setMenu(false); }} className="flex w-full items-center gap-2 px-3 py-1.5 text-ink hover:bg-gray-50">
+          <div className="absolute bottom-7 z-20 w-36 overflow-hidden rounded-lg border border-stone-100 bg-surface py-1 text-sm shadow-xl">
+            <button onClick={() => { onReply?.(message); setMenu(false); }} className="flex w-full items-center gap-2 px-3 py-1.5 text-ink hover:bg-stone-50">
               <Reply size={14} /> Responder
             </button>
+            {!out && onReplyPrivate && (message.author_phone || message.author_lid) && (
+              <button onClick={() => { onReplyPrivate(message); setMenu(false); }} className="flex w-full items-center gap-2 px-3 py-1.5 text-ink hover:bg-stone-50">
+                <MessageSquare size={14} /> Responder no privado
+              </button>
+            )}
             {out && (
-              <button onClick={() => { onEdit?.(message); setMenu(false); }} className="flex w-full items-center gap-2 px-3 py-1.5 text-ink hover:bg-gray-50">
+              <button onClick={() => { onEdit?.(message); setMenu(false); }} className="flex w-full items-center gap-2 px-3 py-1.5 text-ink hover:bg-stone-50">
                 <Pencil size={14} /> Editar
               </button>
             )}
@@ -217,7 +225,7 @@ function Actions({
               const text = message.body ?? `[${message.content_type}]`;
               navigator.clipboard.writeText(text);
               alert("Mensagem copiada para a área de transferência. Cole em outra conversa para encaminhar.");
-            }} className="flex w-full items-center gap-2 px-3 py-1.5 text-ink hover:bg-gray-50">
+            }} className="flex w-full items-center gap-2 px-3 py-1.5 text-ink hover:bg-stone-50">
               <Forward size={14} /> Encaminhar
             </button>
             <button onClick={() => { onDelete?.(message); setMenu(false); }} className="flex w-full items-center gap-2 px-3 py-1.5 text-danger hover:bg-red-50">

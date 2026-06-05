@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { Portal } from "@/components/portal";
 import { useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui";
-import { Portal } from "@/components/portal";
 import { createChannel } from "@/app/(app)/canais/actions";
 import { QrConnectModal } from "@/components/qr-connect-modal";
 import { MetaConnectButton } from "@/components/meta-connect-button";
@@ -101,7 +101,7 @@ export function NewChannelDialog() {
               )}
 
               {type === "uazapi" && (
-                <p className="rounded-lg bg-brand-light px-3 py-2 text-xs text-brand">
+                <p className="rounded-lg bg-brand-light px-3 py-2 text-xs text-brand-dark">
                   Após cadastrar, você conecta escaneando um QR Code ou digitando um código de 8 dígitos no seu WhatsApp.
                 </p>
               )}

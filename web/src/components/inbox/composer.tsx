@@ -176,18 +176,18 @@ export function Composer({
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4" onClick={cancelPreview}>
           <div className="flex w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-surface shadow-2xl" onClick={(e) => e.stopPropagation()}>
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3">
+            <div className="flex items-center justify-between border-b border-stone-100 px-5 py-3">
               <div className="flex items-center gap-2 text-sm font-semibold text-ink">
                 <ImageIcon size={16} className="text-brand" />
                 {isImage ? "Enviar imagem" : isVideo ? "Enviar vídeo" : "Enviar arquivo"}
               </div>
-              <button onClick={cancelPreview} className="rounded-full p-1 text-ink-soft hover:bg-gray-100 hover:text-ink">
+              <button onClick={cancelPreview} className="rounded-full p-1 text-ink-soft hover:bg-stone-100 hover:text-ink">
                 <X size={18} />
               </button>
             </div>
 
             {/* Preview */}
-            <div className="flex items-center justify-center bg-gray-900/5 p-6" style={{ minHeight: 240 }}>
+            <div className="flex items-center justify-center bg-stone-900/5 p-6" style={{ minHeight: 240 }}>
               {isImage && previewUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={previewUrl} alt="Preview" className="max-h-80 max-w-full rounded-lg object-contain" />
@@ -203,7 +203,7 @@ export function Composer({
             </div>
 
             {/* Caption + enviar */}
-            <div className="flex items-center gap-2 border-t border-gray-100 px-4 py-3">
+            <div className="flex items-center gap-2 border-t border-stone-100 px-4 py-3">
               <input
                 ref={captionRef}
                 value={pendingCaption}
@@ -213,7 +213,7 @@ export function Composer({
                   if (e.key === "Escape") cancelPreview();
                 }}
                 placeholder="Adicionar legenda..."
-                className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-brand"
+                className="flex-1 rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-brand"
               />
               <button
                 onClick={confirmSend}
@@ -229,19 +229,19 @@ export function Composer({
       )}
 
       {/* ========== Composer ========== */}
-      <div className="relative flex items-end gap-2 border-t border-gray-100 bg-surface p-3">
+      <div className="relative flex items-end gap-2 border-t border-stone-100 bg-surface p-3">
         <input ref={fileRef} type="file" className="hidden" onChange={pickFile} />
         <input ref={stickerRef} type="file" accept="image/*" className="hidden" onChange={pickStickerFile} />
 
         {/* Dropdown de menções */}
         {filtered.length > 0 && (
-          <div className="absolute bottom-16 left-3 z-30 w-64 overflow-hidden rounded-lg border border-gray-100 bg-surface py-1 shadow-xl">
+          <div className="absolute bottom-16 left-3 z-30 w-64 overflow-hidden rounded-lg border border-stone-100 bg-surface py-1 shadow-xl">
             <p className="px-3 py-1 text-[10px] font-semibold uppercase text-ink-soft">Mencionar</p>
             {filtered.map((c) => (
               <button
                 key={c.phone}
                 onClick={() => pickMention(c)}
-                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm text-ink hover:bg-gray-50"
+                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm text-ink hover:bg-stone-50"
               >
                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-light text-[10px] font-semibold text-brand">
                   {c.name.slice(0, 2).toUpperCase()}
@@ -256,7 +256,7 @@ export function Composer({
           <button
             onClick={() => { setEmojiOpen((v) => !v); setAttachMenu(false); }}
             disabled={disabled || sending}
-            className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl bg-gray-100 text-ink-soft transition hover:bg-gray-200 disabled:opacity-40"
+            className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl bg-stone-100 text-ink-soft transition hover:bg-stone-200 disabled:opacity-40"
             title="Emojis"
           >
             <Smile size={18} />
@@ -267,7 +267,7 @@ export function Composer({
           <button
             onClick={() => setAttachMenu((v) => !v)}
             disabled={disabled || sending}
-            className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl bg-gray-100 text-ink-soft transition hover:bg-gray-200 disabled:opacity-40"
+            className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl bg-stone-100 text-ink-soft transition hover:bg-stone-200 disabled:opacity-40"
             title="Anexar"
           >
             <Paperclip size={18} />
@@ -275,20 +275,20 @@ export function Composer({
           {attachMenu && (
             <>
               <div className="fixed inset-0 z-10" onClick={() => setAttachMenu(false)} />
-              <div className="absolute bottom-12 left-0 z-20 w-44 overflow-hidden rounded-lg border border-gray-100 bg-surface py-1 text-sm shadow-xl">
-                <button onClick={() => { setAttachMenu(false); fileRef.current?.click(); }} className="flex w-full items-center gap-2 px-3 py-2 text-ink hover:bg-gray-50">
+              <div className="absolute bottom-12 left-0 z-20 w-44 overflow-hidden rounded-lg border border-stone-100 bg-surface py-1 text-sm shadow-xl">
+                <button onClick={() => { setAttachMenu(false); fileRef.current?.click(); }} className="flex w-full items-center gap-2 px-3 py-2 text-ink hover:bg-stone-50">
                   <FileUp size={15} /> Arquivo / mídia
                 </button>
-                <button onClick={() => { setAttachMenu(false); stickerRef.current?.click(); }} className="flex w-full items-center gap-2 px-3 py-2 text-ink hover:bg-gray-50">
+                <button onClick={() => { setAttachMenu(false); stickerRef.current?.click(); }} className="flex w-full items-center gap-2 px-3 py-2 text-ink hover:bg-stone-50">
                   <Sticker size={15} /> Figurinha
                 </button>
                 {onSendLocation && (
-                  <button onClick={() => { setAttachMenu(false); onSendLocation(); }} className="flex w-full items-center gap-2 px-3 py-2 text-ink hover:bg-gray-50">
+                  <button onClick={() => { setAttachMenu(false); onSendLocation(); }} className="flex w-full items-center gap-2 px-3 py-2 text-ink hover:bg-stone-50">
                     <MapPin size={15} /> Localização
                   </button>
                 )}
                 {onSendContact && (
-                  <button onClick={() => { setAttachMenu(false); onSendContact(); }} className="flex w-full items-center gap-2 px-3 py-2 text-ink hover:bg-gray-50">
+                  <button onClick={() => { setAttachMenu(false); onSendContact(); }} className="flex w-full items-center gap-2 px-3 py-2 text-ink hover:bg-stone-50">
                     <UserPlus size={15} /> Contato
                   </button>
                 )}
@@ -352,7 +352,7 @@ export function Composer({
             ta.style.height = "auto";
             ta.style.height = `${Math.min(ta.scrollHeight, 200)}px`;
           }}
-          className="min-h-[42px] max-h-[200px] flex-1 resize-none rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-brand disabled:bg-gray-50"
+          className="min-h-[42px] max-h-[200px] flex-1 resize-none rounded-xl border border-stone-200 px-3 py-2 text-sm outline-none focus:border-brand disabled:bg-stone-50"
         />
 
         {text.trim() ? (

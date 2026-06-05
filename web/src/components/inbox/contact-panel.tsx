@@ -87,20 +87,20 @@ export function ContactPanel({
   const title = conversation.contact_name ?? (isGroup ? "Grupo" : conversation.contact_phone);
 
   return (
-    <aside className="flex h-full w-80 shrink-0 flex-col border-l border-gray-100 bg-surface">
-      <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+    <aside className="flex h-full w-80 shrink-0 flex-col border-l border-stone-100 bg-surface">
+      <div className="flex items-center justify-between border-b border-stone-100 px-4 py-3">
         <h2 className="text-sm font-semibold text-ink">{isGroup ? "Dados do grupo" : "Dados do contato"}</h2>
         <button onClick={onClose} className="text-ink-soft hover:text-ink"><X size={18} /></button>
       </div>
 
       <div className="flex-1 overflow-y-auto">
         {/* Cabeçalho com avatar */}
-        <div className="flex flex-col items-center gap-2 border-b border-gray-100 p-5 text-center">
+        <div className="flex flex-col items-center gap-2 border-b border-stone-100 p-5 text-center">
           {conversation.contact_avatar ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={conversation.contact_avatar} alt="" className="h-20 w-20 rounded-full object-cover" />
           ) : (
-            <div className={`flex h-20 w-20 items-center justify-center rounded-full text-xl font-semibold ${isGroup ? "bg-brand-light text-brand" : "bg-gray-200 text-gray-600"}`}>
+            <div className={`flex h-20 w-20 items-center justify-center rounded-full text-xl font-semibold ${isGroup ? "bg-brand-light text-brand" : "bg-stone-200 text-stone-600"}`}>
               {isGroup ? <Users size={28} /> : title.slice(0, 2).toUpperCase()}
             </div>
           )}
@@ -120,7 +120,7 @@ export function ContactPanel({
             {group.description && (
               <>
                 <p className="mb-1 text-[11px] font-semibold uppercase text-ink-soft">Descrição</p>
-                <p className="mb-4 whitespace-pre-wrap rounded-lg bg-gray-50 p-3 text-sm text-ink-soft">{group.description}</p>
+                <p className="mb-4 whitespace-pre-wrap rounded-lg bg-stone-50 p-3 text-sm text-ink-soft">{group.description}</p>
               </>
             )}
             <p className="mb-2 text-[11px] font-semibold uppercase text-ink-soft">{group.participants.length} participantes</p>
@@ -129,9 +129,9 @@ export function ContactPanel({
                 <button
                   key={p.phone}
                   onClick={() => onOpenContact(p.phone, p.name ?? undefined)}
-                  className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left hover:bg-gray-50"
+                  className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left hover:bg-stone-50"
                 >
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200 text-xs font-semibold text-gray-600">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-stone-200 text-xs font-semibold text-stone-600">
                     {(p.name ?? p.phone).slice(0, 2).toUpperCase()}
                   </span>
                   <span className="min-w-0 flex-1">
@@ -200,18 +200,18 @@ export function ContactPanel({
             {/* Ações rápidas */}
             <div className="mt-3 flex gap-1.5">
               <button type="button" onClick={() => window.print()}
-                className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-gray-50 py-2 text-xs font-medium text-ink transition hover:bg-gray-100">
+                className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-stone-50 py-2 text-xs font-medium text-ink transition hover:bg-stone-100">
                 <Printer size={13} /> Imprimir
               </button>
               <button type="button" onClick={() => onOpenContact(contact.phone, contact.name ?? undefined)}
-                className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-gray-50 py-2 text-xs font-medium text-ink transition hover:bg-gray-100">
+                className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-stone-50 py-2 text-xs font-medium text-ink transition hover:bg-stone-100">
                 <Plus size={13} /> Novo atendimento
               </button>
             </div>
 
             {/* Ações SGP (se contrato preenchido) */}
             {fields.contrato && (
-              <div className="mt-3 border-t border-gray-100 pt-3">
+              <div className="mt-3 border-t border-stone-100 pt-3">
                 <p className="mb-2 text-[11px] font-semibold uppercase text-ink-soft">Ações SGP</p>
                 <div className="grid grid-cols-2 gap-1.5">
                   {([
@@ -225,7 +225,7 @@ export function ContactPanel({
                         const r = await sgpAction(conversation.id, action, parseInt(fields.contrato, 10));
                         alert(typeof r === "string" ? r : JSON.stringify(r, null, 2));
                       }}
-                      className="flex items-center justify-center gap-1.5 rounded-lg bg-gray-50 px-2 py-2 text-xs font-medium text-ink transition hover:bg-gray-100">
+                      className="flex items-center justify-center gap-1.5 rounded-lg bg-stone-50 px-2 py-2 text-xs font-medium text-ink transition hover:bg-stone-100">
                       <Icon size={13} /> {label}
                     </button>
                   ))}
@@ -235,20 +235,20 @@ export function ContactPanel({
 
             {/* Histórico de atendimentos anteriores */}
             {history.length > 0 && (
-              <div className="mt-4 border-t border-gray-100 pt-4">
+              <div className="mt-4 border-t border-stone-100 pt-4">
                 <p className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase text-ink-soft">
                   <History size={12} /> Atendimentos anteriores
                 </p>
                 <div className="space-y-1.5">
                   {history.map((h) => (
-                    <div key={h.id} className="flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-2 text-xs">
+                    <div key={h.id} className="flex items-center gap-2 rounded-lg bg-stone-50 px-3 py-2 text-xs">
                       {h.protocol && (
                         <span className="inline-flex items-center gap-0.5 font-mono text-ink-soft">
                           <Hash size={9} />{h.protocol}
                         </span>
                       )}
                       <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
-                        h.status === "closed" ? "bg-gray-100 text-ink-soft" : "bg-green-100 text-green-700"
+                        h.status === "closed" ? "bg-stone-100 text-ink-soft" : "bg-green-100 text-green-700"
                       }`}>
                         {h.status === "closed" ? "Encerrado" : "Aberto"}
                       </span>
@@ -268,7 +268,7 @@ export function ContactPanel({
 }
 
 const inputCls =
-  "w-full rounded-lg border border-gray-200 px-2.5 py-1.5 text-sm outline-none focus:border-brand";
+  "w-full rounded-lg border border-stone-200 px-2.5 py-1.5 text-sm outline-none focus:border-brand";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (

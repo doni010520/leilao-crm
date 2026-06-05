@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { UserCheck, CheckCircle2, Users, Bell, BellOff, Reply, X, ArrowRightLeft, Hash, ArrowLeft } from "lucide-react";
+import { UserCheck, CheckCircle2, Users, Bell, BellOff, Reply, X, ArrowRightLeft, Hash, ArrowLeft, Bot, BotOff } from "lucide-react";
 import { MessageBubble } from "./message-bubble";
 import { Composer } from "./composer";
 import type { ConversationOverview, Message } from "@/lib/types";
@@ -18,12 +18,15 @@ export function ChatThread({
   onEdit,
   onDelete,
   onAuthorClick,
+  onReplyPrivate,
   onOpenPanel,
   onBack,
   onAssign,
   onClose,
   onTransfer,
   onToggleMute,
+  onToggleAi,
+  initialReplyTo,
   onType,
   pending,
 }: {
@@ -39,12 +42,15 @@ export function ChatThread({
   onEdit: (m: Message) => void;
   onDelete: (m: Message) => void;
   onAuthorClick: (m: Message) => void;
+  onReplyPrivate?: (m: Message) => void;
   onOpenPanel: () => void;
   onBack?: () => void;
   onAssign: () => void;
   onClose: () => void;
   onTransfer: () => void;
   onToggleMute: () => void;
+  onToggleAi: () => void;
+  initialReplyTo?: Message | null;
   pending?: boolean;
 }) {
   const endRef = useRef<HTMLDivElement>(null);
@@ -54,28 +60,32 @@ export function ChatThread({
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length, conversation.id]);
   useEffect(() => setReplyTo(null), [conversation.id]);
+  // Pré-preenche o reply quando vem de "Responder no privado"
+  useEffect(() => { if (initialReplyTo) setReplyTo(initialReplyTo); }, [initialReplyTo]);
 
   const isMeta = conversation.channel_type === "meta_cloud";
   const isGroup = !!conversation.is_group;
   const muted = !!conversation.is_muted;
+  const aiPaused = conversation.ai_enabled === false;
+  const aiHandling = !aiPaused && conversation.status === "bot";
   const title = conversation.contact_name ?? (isGroup ? "Grupo" : conversation.contact_phone);
 
   return (
     <div className="flex h-full flex-1 flex-col bg-canvas">
-      <header className="shrink-0 border-b border-gray-100 bg-surface">
+      <header className="shrink-0 border-b border-stone-100 bg-surface">
         {/* Linha 1: avatar + nome + protocolo */}
         <div className="flex items-center gap-2 px-3 pt-2.5 pb-1 md:px-4">
           {onBack && (
-            <button onClick={onBack} className="shrink-0 rounded-lg p-1.5 text-ink-soft hover:bg-gray-100 md:hidden" title="Voltar">
+            <button onClick={onBack} className="shrink-0 rounded-lg p-1.5 text-ink-soft hover:bg-stone-100 md:hidden" title="Voltar">
               <ArrowLeft size={20} />
             </button>
           )}
-          <button onClick={onOpenPanel} className="flex min-w-0 flex-1 items-center gap-3 rounded-lg text-left transition hover:bg-gray-50 p-1" title="Ver dados">
+          <button onClick={onOpenPanel} className="flex min-w-0 flex-1 items-center gap-3 rounded-lg text-left transition hover:bg-stone-50 p-1" title="Ver dados">
             {conversation.contact_avatar ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={conversation.contact_avatar} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover" />
             ) : (
-              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${isGroup ? "bg-brand-light text-brand" : "bg-gray-200 text-gray-600"}`}>
+              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${isGroup ? "bg-brand-light text-brand" : "bg-stone-200 text-stone-600"}`}>
                 {isGroup ? <Users size={16} /> : title.slice(0, 2).toUpperCase()}
               </div>
             )}
@@ -83,6 +93,8 @@ export function ChatThread({
               <p className="flex items-center gap-1.5 truncate text-sm font-semibold text-ink">
                 <span className="truncate">{title}</span>
                 {isGroup && <span className="shrink-0 rounded bg-brand-light px-1 py-0.5 text-[9px] font-medium text-brand">Grupo</span>}
+                {aiHandling && <span className="inline-flex shrink-0 items-center gap-0.5 rounded bg-violet-100 px-1 py-0.5 text-[9px] font-medium text-violet-700"><Bot size={9} /> IA</span>}
+                {aiPaused && <span className="inline-flex shrink-0 items-center gap-0.5 rounded bg-stone-100 px-1 py-0.5 text-[9px] font-medium text-ink-soft"><BotOff size={9} /> IA pausada</span>}
                 {muted && <BellOff size={12} className="shrink-0 text-ink-soft" />}
               </p>
               <p className="truncate text-[11px] text-ink-soft">
@@ -95,15 +107,26 @@ export function ChatThread({
         </div>
         {/* Linha 2: ações */}
         <div className="flex flex-wrap items-center gap-1.5 px-4 pb-2">
-          <button onClick={onToggleMute} title={muted ? "Reativar" : "Silenciar"} className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-1 text-[11px] font-medium text-ink hover:bg-gray-200">
+          <button onClick={onToggleMute} title={muted ? "Reativar" : "Silenciar"} className="inline-flex items-center gap-1 rounded-md bg-stone-100 px-2 py-1 text-[11px] font-medium text-ink hover:bg-stone-200">
             {muted ? <BellOff size={12} /> : <Bell size={12} />} {muted ? "Silenciado" : "Silenciar"}
           </button>
           {conversation.status !== "closed" && (
             <>
-              <button onClick={onAssign} className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-1 text-[11px] font-medium text-ink hover:bg-gray-200">
+              {!isGroup && (
+                aiPaused ? (
+                  <button onClick={onToggleAi} title="Devolver o atendimento para a IA" className="inline-flex items-center gap-1 rounded-md bg-violet-100 px-2 py-1 text-[11px] font-medium text-violet-700 hover:bg-violet-200">
+                    <Bot size={12} /> Reativar IA
+                  </button>
+                ) : (
+                  <button onClick={onToggleAi} title="Pausar a IA e assumir o atendimento" className="inline-flex items-center gap-1 rounded-md bg-stone-100 px-2 py-1 text-[11px] font-medium text-ink hover:bg-stone-200">
+                    <BotOff size={12} /> Pausar IA
+                  </button>
+                )
+              )}
+              <button onClick={onAssign} className="inline-flex items-center gap-1 rounded-md bg-stone-100 px-2 py-1 text-[11px] font-medium text-ink hover:bg-stone-200">
                 <UserCheck size={12} /> Assumir
               </button>
-              <button onClick={onTransfer} className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-1 text-[11px] font-medium text-ink hover:bg-gray-200">
+              <button onClick={onTransfer} className="inline-flex items-center gap-1 rounded-md bg-stone-100 px-2 py-1 text-[11px] font-medium text-ink hover:bg-stone-200">
                 <ArrowRightLeft size={12} /> Transferir
               </button>
               <button onClick={onClose} className="inline-flex items-center gap-1 rounded-md bg-red-50 px-2 py-1 text-[11px] font-medium text-danger hover:bg-red-100">
@@ -112,7 +135,7 @@ export function ChatThread({
             </>
           )}
           {conversation.status === "closed" && (
-            <span className="rounded-md bg-gray-100 px-2 py-1 text-[11px] text-ink-soft">Encerrado</span>
+            <span className="rounded-md bg-stone-100 px-2 py-1 text-[11px] text-ink-soft">Encerrado</span>
           )}
         </div>
       </header>
@@ -155,6 +178,7 @@ export function ChatThread({
                 onEdit={onEdit}
                 onDelete={onDelete}
                 onAuthorClick={onAuthorClick}
+                onReplyPrivate={isGroup ? onReplyPrivate : undefined}
                 quotedAuthor={quotedAuthor}
                 quotedExcerpt={quotedExcerpt}
               />
@@ -165,7 +189,7 @@ export function ChatThread({
       </div>
 
       {replyTo && (
-        <div className="flex items-center gap-2 border-t border-gray-100 bg-brand-light/40 px-4 py-2 text-xs">
+        <div className="flex items-center gap-2 border-t border-stone-100 bg-brand-light/40 px-4 py-2 text-xs">
           <Reply size={14} className="text-brand" />
           <div className="min-w-0 flex-1">
             <p className="font-medium text-brand">Respondendo</p>

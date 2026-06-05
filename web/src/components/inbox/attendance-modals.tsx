@@ -15,7 +15,7 @@ function Overlay({ children, onCancel }: { children: React.ReactNode; onCancel: 
 }
 
 const inputCls =
-  "w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:border-brand";
+  "w-full rounded-lg border border-stone-200 px-3 py-2 text-sm outline-none focus:border-brand";
 
 // ---------------------------------------------------------------------------
 // Encerrar atendimento — classificação + motivo + pesquisa opcional
@@ -68,7 +68,7 @@ export function CloseModal({
                 key={t.id}
                 onClick={() => toggle(t.id)}
                 className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-                  on ? "text-white" : "text-ink hover:bg-gray-100"
+                  on ? "text-white" : "text-ink hover:bg-stone-100"
                 }`}
                 style={on ? { backgroundColor: t.color ?? "#00a8ff" } : { backgroundColor: "#f1f3f5" }}
               >
@@ -102,7 +102,7 @@ export function CloseModal({
       <div className="flex justify-end gap-2">
         <button
           onClick={onCancel}
-          className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-ink hover:bg-gray-200"
+          className="rounded-lg bg-stone-100 px-4 py-2 text-sm font-medium text-ink hover:bg-stone-200"
         >
           Cancelar
         </button>
@@ -173,7 +173,7 @@ export function TransferModal({
         </button>
       </div>
 
-      <div className="mb-4 flex rounded-lg bg-gray-100 p-1 text-sm">
+      <div className="mb-4 flex rounded-lg bg-stone-100 p-1 text-sm">
         {(["person", "department"] as const).map((m) => (
           <button
             key={m}
@@ -188,7 +188,7 @@ export function TransferModal({
       </div>
 
       {mode === "person" ? (
-        <div className="mb-4 max-h-52 overflow-y-auto rounded-lg border border-gray-100">
+        <div className="mb-4 max-h-52 overflow-y-auto rounded-lg border border-stone-100">
           {selectable.length === 0 && (
             <p className="p-3 text-xs text-ink-soft">Nenhum outro atendente disponível.</p>
           )}
@@ -199,7 +199,7 @@ export function TransferModal({
             (g) =>
               g.list.length > 0 && (
                 <div key={g.label}>
-                  <p className="bg-gray-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-ink-soft">
+                  <p className="bg-stone-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-ink-soft">
                     {g.label}
                   </p>
                   {g.list.map((a) => (
@@ -207,12 +207,12 @@ export function TransferModal({
                       key={a.id}
                       onClick={() => setUserId(a.id)}
                       className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition ${
-                        userId === a.id ? "bg-brand-light" : "hover:bg-gray-50"
+                        userId === a.id ? "bg-brand-light" : "hover:bg-stone-50"
                       }`}
                     >
                       <span
                         className={`h-2 w-2 rounded-full ${
-                          a.status === "online" ? "bg-green-500" : "bg-gray-300"
+                          a.status === "online" ? "bg-green-500" : "bg-stone-300"
                         }`}
                       />
                       <span className="text-ink">{a.name || a.email}</span>
@@ -260,7 +260,7 @@ export function TransferModal({
       <div className="flex justify-end gap-2">
         <button
           onClick={onCancel}
-          className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-ink hover:bg-gray-200"
+          className="rounded-lg bg-stone-100 px-4 py-2 text-sm font-medium text-ink hover:bg-stone-200"
         >
           Cancelar
         </button>
