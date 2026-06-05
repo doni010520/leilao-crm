@@ -6,7 +6,7 @@ import type { Tag, Profile, Department } from "@/lib/types";
 
 function Overlay({ children, onCancel }: { children: React.ReactNode; onCancel: () => void }) {
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4" onClick={onCancel}>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4" onClick={onCancel}>
       <div className="w-full max-w-md rounded-card bg-surface p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
         {children}
       </div>

@@ -117,8 +117,8 @@ export function QrConnectModal({
   const img = toDataUrl(qr);
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-sm rounded-card bg-surface p-6 text-center shadow-xl">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-sm rounded-card bg-surface p-6 text-center shadow-2xl animate-fade-up">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-ink">Conectar WhatsApp</h2>
           <button onClick={onClose} className="text-ink-soft hover:text-ink"><X size={18} /></button>
