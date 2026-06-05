@@ -1,30 +1,17 @@
 """
 Property scrapers for LeilãoAgent.
-
-CaixaScraper: downloads CSV files from Caixa's website using Playwright
-(required because Caixa uses Radware Bot Manager that blocks simple HTTP).
-
-The CSV URL pattern is:
-    https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_{UF}.csv
-
-CSV format: semicolon-delimited, UTF-8, row 1 = metadata, row 2 = headers.
-Columns: Nº do imóvel;UF;Cidade;Bairro;Endereço;Preço;Valor de avaliação;
-         Desconto;Financiamento;Descrição;Modalidade de venda;Link de acesso
+Uses Supabase REST API for database operations (no direct PG needed).
+Uses Playwright for Caixa (they block server IPs with Radware).
 """
 import asyncio
 import csv
-import io
 import json
 import re
+import os
 from abc import ABC, abstractmethod
-from pathlib import Path
 
+import httpx
 from loguru import logger
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-
-import sys, os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 ALL_UFS = ["AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT",
@@ -32,77 +19,88 @@ ALL_UFS = ["AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT",
 
 
 class BaseScraper(ABC):
+    """Base scraper using Supabase REST API for persistence."""
     name: str = "base"
 
-    def __init__(self, database_url: str):
-        self.engine = create_async_engine(database_url)
-        self.Session = async_sessionmaker(self.engine, class_=AsyncSession, expire_on_commit=False)
+    def __init__(self, organization_id: str | None = None):
+        self.supabase_url = os.getenv("SUPABASE_URL", "").rstrip("/")
+        self.supabase_key = os.getenv("SUPABASE_SERVICE_KEY", "")
+        self.organization_id = organization_id
+        self._headers = {
+            "apikey": self.supabase_key,
+            "Authorization": f"Bearer {self.supabase_key}",
+            "Content-Type": "application/json",
+            "Prefer": "resolution=merge-duplicates",
+        }
 
     async def run(self):
         logger.info(f"[{self.name}] Starting scraper...")
+        if not self.supabase_url or not self.supabase_key:
+            logger.error(f"[{self.name}] SUPABASE_URL or SUPABASE_SERVICE_KEY not set")
+            return
         try:
             properties = await self.fetch_properties()
             logger.info(f"[{self.name}] Fetched {len(properties)} properties")
             if properties:
-                async with self.Session() as db:
-                    inserted, updated = 0, 0
-                    for prop in properties:
-                        is_new = await self._upsert(db, prop)
-                        if is_new:
-                            inserted += 1
-                        else:
-                            updated += 1
-                    await db.commit()
-                    logger.info(f"[{self.name}] Inserted {inserted}, updated {updated}")
+                inserted = await self._bulk_upsert(properties)
+                logger.info(f"[{self.name}] Upserted {inserted} properties")
         except Exception as e:
             logger.exception(f"[{self.name}] Scraper failed: {e}")
-        finally:
-            await self.engine.dispose()
 
     @abstractmethod
     async def fetch_properties(self) -> list[dict]:
         ...
 
-    async def _upsert(self, db: AsyncSession, data: dict) -> bool:
-        external_id = data.get("external_id")
-        fonte = data.get("fonte", self.name)
-        org_id = data.get("organization_id")
+    async def _bulk_upsert(self, properties: list[dict]) -> int:
+        """Insert/update properties via Supabase REST API in batches."""
+        url = f"{self.supabase_url}/rest/v1/properties"
+        count = 0
+        batch_size = 50
+        async with httpx.AsyncClient(timeout=30) as client:
+            for i in range(0, len(properties), batch_size):
+                batch = properties[i:i+batch_size]
+                # Clean data
+                clean = []
+                for p in batch:
+                    row = {k: v for k, v in p.items() if v is not None}
+                    if not row.get("cidade") or not row.get("estado"):
+                        continue
+                    row.setdefault("status", "aberto")
+                    row.setdefault("ocupacao", "nao_informado")
+                    if self.organization_id:
+                        row["organization_id"] = self.organization_id
+                    clean.append(row)
 
-        if external_id:
-            result = await db.execute(
-                text("SELECT id FROM properties WHERE external_id = :eid AND fonte = :fonte LIMIT 1"),
-                {"eid": external_id, "fonte": fonte}
-            )
-            existing = result.scalar_one_or_none()
-            if existing:
-                # Update mutable fields
-                await db.execute(
-                    text("""UPDATE properties SET
-                        lance_minimo = COALESCE(:lance, lance_minimo),
-                        desconto_pct = COALESCE(:desconto, desconto_pct),
-                        status = COALESCE(:status, status),
-                        aceita_financiamento = COALESCE(:financ, aceita_financiamento),
-                        updated_at = now()
-                    WHERE id = :id"""),
-                    {"lance": data.get("lance_minimo"), "desconto": data.get("desconto_pct"),
-                     "status": data.get("status"), "financ": data.get("aceita_financiamento"),
-                     "id": existing}
-                )
-                return False
+                if not clean:
+                    continue
 
-        # Insert new
-        cols = ["external_id","fonte","organization_id","tipo_leilao","banco","leiloeiro",
-                "tipo_imovel","endereco","bairro","cidade","estado","valor_avaliacao",
-                "lance_minimo","desconto_pct","status","ocupacao","aceita_financiamento",
-                "url_original","praca"]
-        vals = {k: data.get(k) for k in cols}
-        vals = {k: v for k, v in vals.items() if v is not None}
-        if not vals.get("cidade"):
-            return False
-        col_str = ", ".join(vals.keys())
-        param_str = ", ".join(f":{k}" for k in vals.keys())
-        await db.execute(text(f"INSERT INTO properties ({col_str}) VALUES ({param_str})"), vals)
-        return True
+                headers = {**self._headers, "Prefer": "resolution=merge-duplicates"}
+                resp = await client.post(url, json=clean, headers=headers,
+                                         params={"on_conflict": "external_id,fonte"})
+                if resp.status_code in (200, 201):
+                    count += len(clean)
+                else:
+                    # Try one by one on conflict
+                    for row in clean:
+                        r = await client.post(url, json=row, headers=self._headers)
+                        if r.status_code in (200, 201):
+                            count += 1
+                        elif r.status_code == 409:
+                            # Already exists, try update
+                            eid = row.get("external_id")
+                            if eid:
+                                await client.patch(
+                                    f"{url}?external_id=eq.{eid}&fonte=eq.{row.get('fonte',self.name)}",
+                                    json={"lance_minimo": row.get("lance_minimo"),
+                                          "desconto_pct": row.get("desconto_pct"),
+                                          "status": row.get("status"),
+                                          "updated_at": "now()"},
+                                    headers=self._headers
+                                )
+                                count += 1
+                        else:
+                            logger.warning(f"[{self.name}] Insert failed: {r.status_code} {r.text[:100]}")
+        return count
 
 
 def _parse_br_number(s: str) -> float | None:
@@ -141,46 +139,33 @@ def _parse_tipo(descricao: str) -> str:
 
 class CaixaScraper(BaseScraper):
     """
-    Downloads CSV files from Caixa's website using Playwright.
-    Caixa protects everything with Radware Bot Manager — needs a real browser.
+    Downloads CSV files from Caixa using Playwright (headless browser).
+    Caixa blocks server IPs, so we need a real browser to pass their challenge.
+    Falls back to httpx if Playwright is not available.
     """
     name = "caixa"
     CSV_URL = "https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_{uf}.csv"
 
-    def __init__(self, database_url: str, estados: list[str] | None = None, organization_id: str | None = None):
-        super().__init__(database_url)
+    def __init__(self, estados: list[str] | None = None, organization_id: str | None = None,
+                 database_url: str = ""):
+        super().__init__(organization_id)
         self.estados = estados or ["SP", "RJ", "MG"]
-        self.organization_id = organization_id
 
     async def fetch_properties(self) -> list[dict]:
         all_props = []
-        import httpx
 
-        # Strategy 1: Try simple HTTP first (works when server is in Brazil / not blocked)
-        async with httpx.AsyncClient(timeout=30, follow_redirects=False) as client:
-            for uf in self.estados:
-                try:
-                    url = self.CSV_URL.format(uf=uf)
-                    logger.info(f"[caixa] Trying HTTP download for {uf}...")
-                    resp = await client.get(url)
-                    if resp.status_code == 200 and "Lista de" in resp.text[:200]:
-                        props = self._parse_csv(resp.text, uf)
-                        all_props.extend(props)
-                        logger.info(f"[caixa] {uf}: {len(props)} properties (via HTTP)")
-                        await asyncio.sleep(1)
-                        continue
-                    logger.info(f"[caixa] HTTP blocked for {uf} (status={resp.status_code}), trying Playwright...")
-                except Exception as e:
-                    logger.warning(f"[caixa] HTTP failed for {uf}: {e}")
-
-                # Strategy 2: Playwright
-                try:
-                    props = await self._fetch_with_playwright(uf)
+        for uf in self.estados:
+            try:
+                # Try Playwright first
+                props = await self._fetch_with_playwright(uf)
+                if props:
                     all_props.extend(props)
-                    logger.info(f"[caixa] {uf}: {len(props)} properties (via Playwright)")
-                except Exception as e:
-                    logger.error(f"[caixa] Playwright also failed for {uf}: {e}")
-                await asyncio.sleep(2)
+                    logger.info(f"[caixa] {uf}: {len(props)} properties")
+                else:
+                    logger.warning(f"[caixa] No properties found for {uf}")
+            except Exception as e:
+                logger.error(f"[caixa] Failed {uf}: {e}")
+            await asyncio.sleep(2)
 
         return all_props
 
@@ -189,121 +174,114 @@ class CaixaScraper(BaseScraper):
             from playwright.async_api import async_playwright
         except ImportError:
             logger.error("[caixa] Playwright not installed")
-            return []
+            return await self._fetch_with_httpx(uf)
 
         url = self.CSV_URL.format(uf=uf)
+        logger.info(f"[caixa] Downloading {url} via Playwright...")
+
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-blink-features=AutomationControlled"])
+            browser = await p.chromium.launch(
+                headless=True,
+                args=["--no-sandbox", "--disable-dev-shm-usage",
+                      "--disable-blink-features=AutomationControlled"]
+            )
             context = await browser.new_context(
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
                 locale="pt-BR",
+                viewport={"width": 1920, "height": 1080},
             )
             page = await context.new_page()
-            # Remove webdriver flag
             await page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
 
             try:
-                await page.goto(url, wait_until="networkidle", timeout=60000)
-                await page.wait_for_timeout(5000)
-                content = await page.content()
-                if "Radware" in content or "CAPTCHA" in content:
-                    await page.wait_for_timeout(15000)
-                    content = await page.content()
+                # First visit the main page to get cookies
+                await page.goto("https://venda-imoveis.caixa.gov.br/sistema/download-lista.asp",
+                              wait_until="networkidle", timeout=30000)
+                await page.wait_for_timeout(3000)
 
+                # Now try the CSV
+                response = await page.goto(url, wait_until="load", timeout=30000)
+                await page.wait_for_timeout(5000)
+
+                if response and response.status == 200:
+                    body_bytes = await response.body()
+                    body = body_bytes.decode("utf-8", errors="ignore")
+                    if "Lista de" in body[:300]:
+                        return self._parse_csv(body, uf)
+
+                # Try reading page text as fallback
                 body = await page.evaluate("document.body.innerText")
-                if body and "Lista de" in body[:200]:
+                if body and "Lista de" in body[:300]:
                     return self._parse_csv(body, uf)
 
-                logger.warning(f"[caixa] Playwright could not get CSV for {uf}")
+                content = await page.content()
+                if "Forbidden" in content or "403" in content:
+                    logger.warning(f"[caixa] IP blocked for {uf}")
+                elif "Radware" in content:
+                    logger.warning(f"[caixa] Bot challenge for {uf}")
+
+                return []
+            except Exception as e:
+                logger.error(f"[caixa] Playwright error for {uf}: {e}")
                 return []
             finally:
                 await browser.close()
 
-    async def _fetch_csv(self, page, uf: str) -> list[dict]:
+    async def _fetch_with_httpx(self, uf: str) -> list[dict]:
+        """Fallback: simple HTTP (works when not blocked)."""
         url = self.CSV_URL.format(uf=uf)
-        logger.info(f"[caixa] Downloading {url}")
-
-        # Navigate and wait for any bot challenge to resolve
-        resp = await page.goto(url, wait_until="networkidle", timeout=60000)
-
-        # Wait a bit for any JS challenge to complete
-        await page.wait_for_timeout(3000)
-
-        # Check if we got a CAPTCHA page
-        content = await page.content()
-        if "Radware" in content or "CAPTCHA" in content:
-            logger.warning(f"[caixa] Bot challenge detected for {uf}, waiting longer...")
-            await page.wait_for_timeout(10000)
-            content = await page.content()
-            if "Radware" in content:
-                logger.error(f"[caixa] Could not bypass bot manager for {uf}")
-                return []
-
-        # Try to get the CSV content
-        # After challenge resolution, the page should have the CSV text
-        body = await page.evaluate("document.body.innerText")
-        if not body or len(body) < 100:
-            # Try downloading via a direct request in the browser context
-            try:
-                response = await page.goto(url, wait_until="load", timeout=30000)
-                if response:
-                    body_bytes = await response.body()
-                    body = body_bytes.decode("utf-8", errors="ignore")
-            except:
-                pass
-
-        if not body or "Lista de Imóveis" not in body[:200]:
-            logger.warning(f"[caixa] No valid CSV content for {uf} (got {len(body or '')} chars)")
-            return []
-
-        return self._parse_csv(body, uf)
+        try:
+            async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
+                resp = await client.get(url, headers={
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                })
+                if resp.status_code == 200 and "Lista de" in resp.text[:300]:
+                    return self._parse_csv(resp.text, uf)
+        except Exception as e:
+            logger.warning(f"[caixa] httpx failed for {uf}: {e}")
+        return []
 
     def _parse_csv(self, csv_text: str, uf: str) -> list[dict]:
         lines = csv_text.strip().split("\n")
         if len(lines) < 3:
             return []
 
-        # Skip row 1 (metadata), row 2 is headers
-        reader = csv.DictReader(lines[2:], fieldnames=[
-            "numero","uf","cidade","bairro","endereco","preco",
-            "valor_avaliacao","desconto","financiamento","descricao",
-            "modalidade","link"
-        ], delimiter=";")
-
+        # Skip row 1 (metadata), use row 2+ as data
+        reader = csv.reader(lines[2:], delimiter=";")
         props = []
         for row in reader:
-            if not row.get("cidade"):
+            if len(row) < 6 or not row[2]:  # needs at least cidade
                 continue
-            preco = _parse_br_number(row.get("preco", ""))
-            avaliacao = _parse_br_number(row.get("valor_avaliacao", ""))
-            desconto = _parse_desconto(row.get("desconto", ""))
+            preco = _parse_br_number(row[5] if len(row) > 5 else "")
+            avaliacao = _parse_br_number(row[6] if len(row) > 6 else "")
+            desconto = _parse_desconto(row[7] if len(row) > 7 else "")
+            descricao = row[9] if len(row) > 9 else ""
 
             props.append({
-                "external_id": (row.get("numero") or "").strip(),
+                "external_id": row[0].strip(),
                 "fonte": "caixa",
-                "organization_id": self.organization_id,
                 "tipo_leilao": "extrajudicial",
                 "banco": "Caixa Econômica Federal",
-                "tipo_imovel": _parse_tipo(row.get("descricao", "")),
-                "endereco": (row.get("endereco") or "").strip(),
-                "bairro": (row.get("bairro") or "").strip(),
-                "cidade": (row.get("cidade") or "").strip(),
-                "estado": (row.get("uf") or uf).strip(),
+                "tipo_imovel": _parse_tipo(descricao),
+                "endereco": (row[4] if len(row) > 4 else "").strip(),
+                "bairro": (row[3] if len(row) > 3 else "").strip(),
+                "cidade": row[2].strip(),
+                "estado": (row[1] if len(row) > 1 else uf).strip(),
                 "valor_avaliacao": avaliacao,
                 "lance_minimo": preco,
                 "desconto_pct": desconto,
                 "status": "aberto",
                 "ocupacao": "nao_informado",
-                "aceita_financiamento": (row.get("financiamento") or "").strip().lower() == "sim",
-                "url_original": (row.get("link") or "").strip(),
-                "praca": (row.get("modalidade") or "").strip(),
+                "aceita_financiamento": (row[8] if len(row) > 8 else "").strip().lower() == "sim",
+                "url_original": (row[11] if len(row) > 11 else "").strip(),
+                "praca": (row[10] if len(row) > 10 else "").strip(),
             })
 
         return props
 
 
 class ZukScraper(BaseScraper):
-    """Stub — Zuk requires Playwright and custom parsing."""
+    """Stub — Zuk requires custom implementation."""
     name = "zuk"
 
     async def fetch_properties(self) -> list[dict]:
@@ -315,18 +293,17 @@ class JsonImporter(BaseScraper):
     """Import properties from a JSON file."""
     name = "import"
 
-    def __init__(self, database_url: str, filepath: str, fonte: str = "import", organization_id: str | None = None):
-        super().__init__(database_url)
+    def __init__(self, filepath: str, fonte: str = "import", organization_id: str | None = None,
+                 database_url: str = ""):
+        super().__init__(organization_id)
         self.filepath = filepath
         self.fonte_name = fonte
-        self.organization_id = organization_id
 
     async def fetch_properties(self) -> list[dict]:
+        from pathlib import Path
         data = json.loads(Path(self.filepath).read_text(encoding="utf-8"))
         if not isinstance(data, list):
             data = [data]
         for item in data:
             item.setdefault("fonte", self.fonte_name)
-            if self.organization_id:
-                item["organization_id"] = self.organization_id
         return data

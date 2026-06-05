@@ -32,13 +32,8 @@ async def _run_scrape(estados: list[str]):
     _last_log = []
     try:
         from scrapers.scraper import CaixaScraper
-        db_url = settings.database_url
-        if not db_url:
-            _last_log.append("ERROR: DATABASE_URL not configured")
-            logger.error("[SCRAPER] DATABASE_URL not configured")
-            return
         _last_log.append(f"Starting scraper for {estados}")
-        scraper = CaixaScraper(db_url, estados=estados)
+        scraper = CaixaScraper(estados=estados)
         await scraper.run()
         _last_log.append("Scraper finished")
     except Exception as e:
