@@ -7,7 +7,6 @@ from fastapi import APIRouter, BackgroundTasks
 from pydantic import BaseModel
 from loguru import logger
 from app.core.config import get_settings
-import httpx
 
 router = APIRouter(prefix="/scraper", tags=["scraper"])
 settings = get_settings()
@@ -70,6 +69,7 @@ async def scraper_status():
 @router.get("/test")
 async def test_download():
     """Test CSV download from Caixa and return debug info."""
+    import httpx
     url = "https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_MG.csv"
     results = {}
 
