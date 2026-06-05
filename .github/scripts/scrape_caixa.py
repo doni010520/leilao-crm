@@ -162,54 +162,83 @@ async def download_csv(uf: str) -> str | None:
         return None
 
 
+def _sql_val(v) -> str:
+    """Escape a value for SQL."""
+    if v is None:
+        return "NULL"
+    if isinstance(v, bool):
+        return "true" if v else "false"
+    if isinstance(v, (int, float)):
+        return str(v)
+    s = str(v).replace("'", "''")
+    return f"'{s}'"
+
+
 async def upsert_to_supabase(props: list[dict], supabase_url: str, supabase_key: str) -> int:
-    """Insert properties to Supabase via REST API in batches."""
-    url = f"{supabase_url}/rest/v1/properties"
+    """Insert properties to Supabase via pg/query (SQL direct) in batches."""
+    pg_url = f"{supabase_url}/pg/query"
     headers = {
         "apikey": supabase_key,
         "Authorization": f"Bearer {supabase_key}",
         "Content-Type": "application/json",
-        "Prefer": "return=minimal,resolution=ignore-duplicates",
     }
+    cols = ["external_id","fonte","tipo_leilao","banco","tipo_imovel","endereco",
+            "bairro","cidade","estado","valor_avaliacao","lance_minimo","desconto_pct",
+            "status","ocupacao","aceita_financiamento","url_original","praca"]
+
     # Clean data
     clean = []
     for p in props:
-        row = {k: v for k, v in p.items() if v is not None}
+        row = {k: v for k, v in p.items() if v is not None and k in cols}
         if not row.get("cidade") or not row.get("estado"):
             continue
         row.setdefault("status", "aberto")
         row.setdefault("ocupacao", "nao_informado")
+        row.setdefault("fonte", "caixa")
         clean.append(row)
 
     if not clean:
         return 0
 
     count = 0
-    batch_size = 50
-    async with httpx.AsyncClient(timeout=httpx.Timeout(60.0, connect=30.0)) as client:
+    batch_size = 100
+    async with httpx.AsyncClient(timeout=httpx.Timeout(120.0, connect=60.0)) as client:
         for i in range(0, len(clean), batch_size):
             batch = clean[i:i+batch_size]
+            # Build VALUES clause
+            values_rows = []
+            for row in batch:
+                vals = [_sql_val(row.get(c)) for c in cols]
+                values_rows.append(f"({', '.join(vals)})")
+
+            sql = f"""INSERT INTO properties ({', '.join(cols)})
+VALUES {', '.join(values_rows)}
+ON CONFLICT (external_id, fonte) DO UPDATE SET
+  lance_minimo = EXCLUDED.lance_minimo,
+  desconto_pct = EXCLUDED.desconto_pct,
+  aceita_financiamento = EXCLUDED.aceita_financiamento,
+  status = EXCLUDED.status,
+  updated_at = now();"""
+
             for attempt in range(3):
                 try:
-                    resp = await client.post(url, json=batch, headers=headers)
-                    if resp.status_code in (200, 201):
+                    resp = await client.post(pg_url, json={"query": sql}, headers=headers)
+                    body = resp.text
+                    if resp.status_code == 200 and "error" not in body.lower():
                         count += len(batch)
                         break
-                    elif resp.status_code == 409:
-                        # Batch had conflicts, insert one by one
-                        for row in batch:
-                            try:
-                                r = await client.post(url, json=row, headers=headers)
-                                if r.status_code in (200, 201):
-                                    count += 1
-                            except:
-                                pass
-                        break
                     else:
+                        err = body[:200]
                         if attempt == 0:
-                            print(f"  Batch error: {resp.status_code} {resp.text[:100]}")
-                        if attempt < 2:
-                            await asyncio.sleep(2)
+                            print(f"  SQL error: {err}")
+                        # If unique constraint missing, try without ON CONFLICT
+                        if "constraint" in body.lower() and attempt == 1:
+                            sql_simple = f"INSERT INTO properties ({', '.join(cols)}) VALUES {', '.join(values_rows)} ON CONFLICT DO NOTHING;"
+                            resp2 = await client.post(pg_url, json={"query": sql_simple}, headers=headers)
+                            if resp2.status_code == 200:
+                                count += len(batch)
+                                break
+                        await asyncio.sleep(2)
                 except httpx.TimeoutException:
                     print(f"  Timeout on batch {i//batch_size + 1}, retry {attempt + 1}")
                     await asyncio.sleep(5)
@@ -217,7 +246,7 @@ async def upsert_to_supabase(props: list[dict], supabase_url: str, supabase_key:
                     print(f"  Error: {e}")
                     break
 
-            if (i // batch_size) % 5 == 0 and i > 0:
+            if (i // batch_size) % 3 == 0:
                 print(f"  Progress: {count}/{len(clean)}")
 
     return count
