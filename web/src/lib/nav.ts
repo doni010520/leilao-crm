@@ -3,8 +3,6 @@ import {
   BarChart3,
   MessageSquareText,
   Radio,
-  Bot,
-  Megaphone,
   Users,
   Layers,
   Settings,
@@ -52,8 +50,6 @@ export const NAV: NavGroup[] = [
       { href: "/atendimento", label: "Inbox", icon: MessageSquareText },
       { href: "/ajustes/ia", label: "Agente de IA", icon: Sparkles, adminOnly: true },
       { href: "/canais", label: "Canais WhatsApp", icon: Radio, adminOnly: true },
-      { href: "/automacoes", label: "Automações", icon: Bot, adminOnly: true },
-      { href: "/campanhas", label: "Campanhas", icon: Megaphone, adminOnly: true },
     ],
   },
   {

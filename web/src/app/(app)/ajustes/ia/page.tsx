@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Bot, Save, Users, MapPin, Sparkles, GripVertical, Plus, Trash2, ChevronDown, ChevronUp, Info, BookOpen, Home, Upload, Radio, ArrowRight } from "lucide-react";
+import { Bot, Save, Users, MapPin, Sparkles, GripVertical, Plus, Trash2, ChevronDown, ChevronUp, Info, BookOpen, Home, Upload, Radio, ArrowRight, Power } from "lucide-react";
 import { PageHeader, Button, Card } from "@/components/ui";
 import { Scroll } from "@/components/scroll";
 
@@ -18,6 +18,7 @@ interface AgentConfig {
   baseConhecimento: string;
   nivelHandoff: "compradores" | "interessados" | "todos";
   horarioAtendimento: string;
+  iaAtiva: boolean;
 }
 
 const DEFAULT_PERGUNTAS = [
@@ -42,6 +43,7 @@ const DEFAULT_CONFIG: AgentConfig = {
   baseConhecimento: "",
   nivelHandoff: "interessados",
   horarioAtendimento: "Seg a Sex, 8h às 18h",
+  iaAtiva: false,
 };
 
 const HANDOFF_OPTIONS = [
@@ -143,6 +145,36 @@ export default function AgentConfigPage() {
                 <strong> avisa você</strong> quando o lead está pronto. Personalize tudo abaixo.
               </p>
             </div>
+          </div>
+        </Card>
+
+        {/* ── Toggle global ── */}
+        <Card className={`mb-6 transition-all ${config.iaAtiva ? "border-green-300 bg-green-50/50" : "border-stone-200"}`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-colors ${config.iaAtiva ? "bg-green-100 text-green-600" : "bg-stone-100 text-stone-400"}`}>
+                <Power size={24} />
+              </div>
+              <div>
+                <h3 className="font-display text-base font-bold text-ink">
+                  {config.iaAtiva ? "IA ativada" : "IA desativada"}
+                </h3>
+                <p className="text-sm text-ink-soft">
+                  {config.iaAtiva
+                    ? "O agente está respondendo automaticamente no WhatsApp."
+                    : "O agente não está respondendo. Ative para começar o atendimento automático."}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => update("iaAtiva", !config.iaAtiva)}
+              className={`relative h-7 w-13 rounded-full transition-colors ${config.iaAtiva ? "bg-green-500" : "bg-stone-300"}`}
+              role="switch"
+              aria-checked={config.iaAtiva}
+              aria-label={config.iaAtiva ? "Desativar IA" : "Ativar IA"}
+            >
+              <span className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform ${config.iaAtiva ? "translate-x-6" : ""}`} />
+            </button>
           </div>
         </Card>
 
