@@ -10,10 +10,10 @@ export function PageHeader({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 py-6 animate-fade-up">
+    <div className="flex flex-col gap-3 py-4 animate-fade-up sm:flex-row sm:items-start sm:justify-between sm:gap-4 sm:py-6">
       <div>
-        <h1 className="font-display text-3xl font-semibold tracking-tight text-ink">{title}</h1>
-        {subtitle && <p className="mt-1 text-sm text-ink-soft">{subtitle}</p>}
+        <h1 className="font-display text-xl font-semibold tracking-tight text-ink sm:text-3xl">{title}</h1>
+        {subtitle && <p className="mt-0.5 text-xs text-ink-soft sm:mt-1 sm:text-sm">{subtitle}</p>}
       </div>
       {action}
     </div>
