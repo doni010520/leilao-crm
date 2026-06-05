@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
-import { Sidebar } from "@/components/sidebar";
-import { Topbar } from "@/components/topbar";
 import { getSession } from "@/lib/auth";
+import { AppShell } from "@/components/app-shell";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const hasEnv = !!process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -22,18 +21,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar role={role} />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <Topbar userName={userName} orgName={orgName} email={email} />
-        {!hasEnv && (
-          <div className="mx-6 mb-2 rounded-lg bg-amber-100 px-4 py-2 text-xs text-amber-800">
-            Modo preview — Supabase não configurado. Crie o projeto e preencha o{" "}
-            <code>.env.local</code> para ativar login e dados reais.
-          </div>
-        )}
-        <main className="min-h-0 flex-1 overflow-hidden">{children}</main>
-      </div>
-    </div>
+    <AppShell userName={userName} orgName={orgName} email={email} role={role} hasEnv={hasEnv}>
+      {children}
+    </AppShell>
   );
 }

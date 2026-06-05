@@ -45,18 +45,18 @@ export default function LoginPage() {
         <div className="animate-fade-up stagger-2">
           <blockquote className="max-w-md border-l-2 border-accent pl-5">
             <p className="text-xl font-display font-semibold leading-snug tracking-tight">
-              &ldquo;Você dorme.<br />
-              Seu vendedor de IA <span className="text-accent">não</span>.&rdquo;
+              &ldquo;Seus leads chegam a qualquer hora.<br />
+              Agora <span className="text-accent">você também</span>.&rdquo;
             </p>
           </blockquote>
           <p className="mt-6 max-w-sm text-sm leading-relaxed text-white/70">
-            Agente de IA que atende no WhatsApp 24/7, qualifica leads, busca imóveis de leilão
-            e calcula viabilidade — enquanto você foca em fechar negócios.
+            Atenda pelo WhatsApp 24/7, encontre as melhores oportunidades de leilão
+            e feche mais arremates — sem perder nenhum contato.
           </p>
         </div>
 
         <p className="text-xs text-white/40 animate-fade-in stagger-5">
-          ImobLeilão CRM — CRM + IA para imobiliárias de leilão
+          ImobLeilão CRM — Mais leads. Mais arremates.
         </p>
       </div>
 
