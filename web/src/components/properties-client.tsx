@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Plus, MapPin, AlertTriangle, Search, SlidersHorizontal, X, Building, Calendar, Banknote, Home } from "lucide-react";
-import { PageHeader, Button, Card, EmptyState } from "@/components/ui";
+import { Button, Card, EmptyState } from "@/components/ui";
 import { PropertyForm } from "@/components/property-form";
 import type { Property } from "@/lib/types-auction";
 
@@ -94,11 +94,10 @@ export function PropertiesClient({ initialProperties }: { initialProperties: Pro
 
   return (
     <>
-      <PageHeader
-        title="Imóveis de Leilão"
-        subtitle={`${filtered.length} imóvel${filtered.length !== 1 ? "is" : ""} encontrado${filtered.length !== 1 ? "s" : ""}`}
-        action={<Button onClick={() => setShowForm(true)}><Plus size={16} /> Cadastrar</Button>}
-      />
+      <div className="mb-4 flex items-center justify-between">
+        <p className="text-sm text-ink-soft">{filtered.length} imóvel{filtered.length !== 1 ? "is" : ""} encontrado{filtered.length !== 1 ? "s" : ""}</p>
+        <Button onClick={() => setShowForm(true)}><Plus size={16} /> Cadastrar</Button>
+      </div>
 
       {/* Search + filter toggle */}
       <div className="mb-4 flex flex-wrap items-center gap-3">

@@ -1,5 +1,5 @@
 import { getProperties } from "@/lib/data/auction";
-import { PropertiesClient } from "@/components/properties-client";
+import { ImoveisPageClient } from "@/components/imoveis-page-client";
 import { Scroll } from "@/components/scroll";
 
 export default async function ImoveisPage() {
@@ -7,7 +7,7 @@ export default async function ImoveisPage() {
   return (
     <Scroll>
       <div className="mx-auto max-w-7xl p-6">
-        <PropertiesClient initialProperties={properties} />
+        <ImoveisPageClient initialProperties={properties} />
       </div>
     </Scroll>
   );

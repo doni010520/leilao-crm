@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Bot, Save, MessageSquare, Users, MapPin, Clock, Shield, Zap, ChevronDown, ChevronUp, Info } from "lucide-react";
+import { Bot, Save, Users, MapPin, Sparkles, GripVertical, Plus, Trash2, ChevronDown, ChevronUp, Info, BookOpen } from "lucide-react";
 import { PageHeader, Button, Card } from "@/components/ui";
 import { Scroll } from "@/components/scroll";
 
@@ -11,17 +11,23 @@ interface AgentConfig {
   creci: string;
   whatsappCorretor: string;
   regioes: string;
-  especialidades: string;
-  tom: "profissional" | "descontraido" | "formal";
-  saudacao: string;
-  mensagemAusencia: string;
-  horarioAtendimento: string;
-  scoreHandoff: number;
-  apresentacao: string;
   diferencial: string;
-  frasesProibidas: string;
-  encerramento: string;
+  saudacao: string;
+  perguntas: string[];
+  baseConhecimento: string;
+  nivelHandoff: "compradores" | "interessados" | "todos";
+  horarioAtendimento: string;
 }
+
+const DEFAULT_PERGUNTAS = [
+  "Você já participou de algum leilão de imóvel antes, ou seria sua primeira vez?",
+  "O que você está buscando: comprar pra morar, investir e revender, ou ainda está entendendo como funciona?",
+  "Tem algum imóvel ou leilão específico em mente, ou quer que a gente garimpe oportunidades pra você?",
+  "Qual região te interessa? (cidade, estado ou bairro)",
+  "Qual faixa de valor você está considerando pro lance?",
+  "Pretende pagar à vista ou precisaria de financiamento?",
+  "Tem ideia de quando gostaria de arrematar? Próximos dias, semanas, ou sem prazo?",
+];
 
 const DEFAULT_CONFIG: AgentConfig = {
   nomeImobiliaria: "",
@@ -29,33 +35,48 @@ const DEFAULT_CONFIG: AgentConfig = {
   creci: "",
   whatsappCorretor: "",
   regioes: "",
-  especialidades: "Leilões extrajudiciais, imóveis Caixa, leilões judiciais",
-  tom: "profissional",
-  saudacao: "Olá! 👋 Sou o assistente virtual da {imobiliária}. Posso te ajudar a encontrar oportunidades em leilões de imóveis. Você já participou de algum leilão antes?",
-  mensagemAusencia: "Estamos fora do horário de atendimento humano, mas posso continuar te ajudando! Se precisar falar com o corretor, ele retorna no próximo horário comercial.",
-  horarioAtendimento: "Seg a Sex, 8h às 18h",
-  scoreHandoff: 12,
-  apresentacao: "Somos especialistas em leilões de imóveis. Ajudamos você a encontrar oportunidades com até 60% de desconto, analisamos editais e acompanhamos todo o processo.",
   diferencial: "",
-  frasesProibidas: "",
-  encerramento: "Foi um prazer te ajudar! Qualquer dúvida sobre leilões, pode mandar mensagem a qualquer hora. 🏠",
+  saudacao: "Olá! 👋 Sou o assistente virtual da {imobiliária}. Posso te ajudar a encontrar oportunidades em leilões de imóveis com até 60% de desconto. Você já participou de algum leilão antes?",
+  perguntas: [...DEFAULT_PERGUNTAS],
+  baseConhecimento: "",
+  nivelHandoff: "interessados",
+  horarioAtendimento: "Seg a Sex, 8h às 18h",
 };
 
-const TONS = [
-  { value: "profissional", label: "Profissional", desc: "Direto, claro e confiável. Ideal para investidores." },
-  { value: "descontraido", label: "Descontraído", desc: "Leve e amigável. Bom para quem compra a primeira casa." },
-  { value: "formal", label: "Formal", desc: "Respeitoso e técnico. Para clientes corporativos." },
-] as const;
+const HANDOFF_OPTIONS = [
+  {
+    value: "compradores" as const,
+    title: "Só compradores prontos",
+    desc: "A IA só te avisa quando o lead tem dinheiro, imóvel em mente e quer comprar agora.",
+    example: "Ex.: \"Tenho R$ 300k à vista, quero o apto da Rua Augusta no leilão dia 15.\"",
+    icon: "🎯",
+  },
+  {
+    value: "interessados" as const,
+    title: "Interessados reais",
+    desc: "A IA te avisa quando identifica interesse real — tem objetivo claro e faixa de valor, mesmo que ainda esteja decidindo.",
+    example: "Ex.: \"Quero investir em leilão, tenho até R$ 400k, preciso entender melhor.\"",
+    icon: "🤝",
+    recommended: true,
+  },
+  {
+    value: "todos" as const,
+    title: "Todo mundo",
+    desc: "A IA te avisa pra qualquer pessoa que interagir. Você fala com todos, a IA só faz o primeiro contato.",
+    example: "Ex.: \"Vi um vídeo sobre leilão, como funciona?\"",
+    icon: "📢",
+  },
+];
 
 export default function AgentConfigPage() {
   const [config, setConfig] = useState<AgentConfig>(DEFAULT_CONFIG);
   const [saved, setSaved] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     identidade: true,
-    comportamento: true,
-    mensagens: false,
-    handoff: false,
-    avancado: false,
+    saudacao: true,
+    perguntas: true,
+    conhecimento: false,
+    handoff: true,
   });
 
   function toggle(section: string) {
@@ -67,6 +88,28 @@ export default function AgentConfigPage() {
     setSaved(false);
   }
 
+  function addPergunta() {
+    update("perguntas", [...config.perguntas, ""]);
+  }
+
+  function removePergunta(index: number) {
+    update("perguntas", config.perguntas.filter((_, i) => i !== index));
+  }
+
+  function updatePergunta(index: number, value: string) {
+    const next = [...config.perguntas];
+    next[index] = value;
+    update("perguntas", next);
+  }
+
+  function movePergunta(from: number, to: number) {
+    if (to < 0 || to >= config.perguntas.length) return;
+    const next = [...config.perguntas];
+    const [item] = next.splice(from, 1);
+    next.splice(to, 0, item);
+    update("perguntas", next);
+  }
+
   function handleSave() {
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
@@ -74,279 +117,158 @@ export default function AgentConfigPage() {
 
   return (
     <Scroll>
-      <div className="mx-auto max-w-3xl pb-12">
+      <div className="mx-auto max-w-3xl pb-20">
         <PageHeader
           title="Agente de IA"
           subtitle="Configure o assistente que atende seus clientes no WhatsApp 24/7"
           action={
             <Button onClick={handleSave} variant={saved ? "ghost" : "primary"}>
-              <Save size={16} />
-              {saved ? "Salvo!" : "Salvar configuração"}
+              <Save size={16} /> {saved ? "Salvo!" : "Salvar"}
             </Button>
           }
         />
 
-        {/* Hero explanation */}
+        {/* Hero */}
         <Card className="mb-8 border-accent/30 bg-accent-light/50">
           <div className="flex gap-4">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-accent/10">
               <Bot size={24} className="text-accent" />
             </div>
             <div>
-              <h2 className="font-display text-base font-bold text-ink">Como funciona seu agente de IA</h2>
+              <h2 className="font-display text-base font-bold text-ink">Como funciona</h2>
               <p className="mt-1 text-sm leading-relaxed text-ink-soft">
-                Quando um cliente manda mensagem no WhatsApp, o agente responde automaticamente.
-                Ele <strong>acolhe</strong>, <strong>tira dúvidas sobre leilão</strong>, <strong>qualifica o lead</strong> (descobre se é comprador sério
-                ou curioso) e <strong>transfere pra você</strong> só os leads quentes — com resumo completo. Você
-                personaliza abaixo o que ele diz e como se comporta.
+                Quando um cliente manda mensagem no WhatsApp, a IA responde automaticamente.
+                Ela <strong>acolhe</strong>, <strong>faz as perguntas que você definir</strong>, <strong>apresenta imóveis da sua base</strong> e
+                <strong> avisa você</strong> quando o lead está pronto. Personalize tudo abaixo.
               </p>
             </div>
           </div>
         </Card>
 
-        {/* ── Section: Identidade ── */}
-        <Section
-          title="Identidade da Imobiliária"
-          icon={<Users size={18} />}
-          description="A IA se apresenta com esses dados"
-          open={openSections.identidade}
-          onToggle={() => toggle("identidade")}
-        >
+        {/* ── Identidade ── */}
+        <Section title="Sobre sua imobiliária" icon={<Users size={18} />} desc="A IA se apresenta com esses dados" open={openSections.identidade} onToggle={() => toggle("identidade")}>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field
-              label="Nome da imobiliária"
-              hint="Como a IA se apresenta: 'Sou o assistente da...'"
-              value={config.nomeImobiliaria}
-              onChange={v => update("nomeImobiliaria", v)}
-              placeholder="Ex.: Imob Leilões SP"
-            />
-            <Field
-              label="Seu nome (corretor)"
-              hint="Pra quem a IA transfere: 'Vou te conectar com...'"
-              value={config.nomeCorretor}
-              onChange={v => update("nomeCorretor", v)}
-              placeholder="Ex.: Adonias"
-            />
-            <Field
-              label="CRECI"
-              hint="Mostrado se o cliente perguntar"
-              value={config.creci}
-              onChange={v => update("creci", v)}
-              placeholder="Ex.: 123456-F/SP"
-            />
-            <Field
-              label="WhatsApp do corretor"
-              hint="Número para onde a IA transfere leads quentes"
-              value={config.whatsappCorretor}
-              onChange={v => update("whatsappCorretor", v)}
-              placeholder="5511999999999"
-            />
+            <Field label="Nome da imobiliária" hint="A IA diz: 'Sou o assistente da...'" value={config.nomeImobiliaria} onChange={v => update("nomeImobiliaria", v)} placeholder="Ex.: Imob Leilões SP" />
+            <Field label="Seu nome" hint="A IA diz: 'Vou te conectar com...'" value={config.nomeCorretor} onChange={v => update("nomeCorretor", v)} placeholder="Ex.: Adonias" />
+            <Field label="CRECI" hint="Mostrado se o cliente perguntar" value={config.creci} onChange={v => update("creci", v)} placeholder="Ex.: 123456-F/SP" />
+            <Field label="Seu WhatsApp" hint="Para onde a IA transfere leads" value={config.whatsappCorretor} onChange={v => update("whatsappCorretor", v)} placeholder="5511999999999" />
           </div>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <Field
-              label="Regiões de atuação"
-              hint="Onde você busca imóveis"
-              value={config.regioes}
-              onChange={v => update("regioes", v)}
-              placeholder="Ex.: São Paulo capital, ABC, Campinas"
-            />
-            <Field
-              label="Especialidades"
-              hint="Tipos de leilão que você trabalha"
-              value={config.especialidades}
-              onChange={v => update("especialidades", v)}
-              placeholder="Ex.: Leilões Caixa, extrajudiciais"
-            />
-          </div>
-          <TextArea
-            label="Apresentação da empresa"
-            hint="Texto curto que a IA usa quando o cliente pergunta 'quem é vocês?'"
-            value={config.apresentacao}
-            onChange={v => update("apresentacao", v)}
-            rows={3}
-            className="mt-4"
-          />
-          <Field
-            label="Diferencial"
-            hint="O que te diferencia dos concorrentes. A IA menciona quando faz sentido."
-            value={config.diferencial}
-            onChange={v => update("diferencial", v)}
-            placeholder="Ex.: Acompanhamento jurídico incluso, 10 anos de experiência"
-            className="mt-4"
-          />
+          <Field label="Regiões de atuação" value={config.regioes} onChange={v => update("regioes", v)} placeholder="Ex.: São Paulo capital, ABC, Campinas" className="mt-4" />
+          <Field label="Seu diferencial" hint="O que te diferencia. A IA menciona quando faz sentido." value={config.diferencial} onChange={v => update("diferencial", v)} placeholder="Ex.: 10 anos de experiência, acompanhamento jurídico incluso" className="mt-4" />
+          <Field label="Horário de atendimento" hint="Fora desse horário a IA continua atendendo, mas avisa que você retorna no próximo dia útil." value={config.horarioAtendimento} onChange={v => update("horarioAtendimento", v)} className="mt-4" />
         </Section>
 
-        {/* ── Section: Comportamento ── */}
-        <Section
-          title="Comportamento da IA"
-          icon={<MessageSquare size={18} />}
-          description="Como a IA conversa com seus clientes"
-          open={openSections.comportamento}
-          onToggle={() => toggle("comportamento")}
-        >
+        {/* ── Saudação ── */}
+        <Section title="Mensagem de saudação" icon={<Sparkles size={18} />} desc="Primeira mensagem que o cliente recebe" open={openSections.saudacao} onToggle={() => toggle("saudacao")}>
           <div>
-            <label className="mb-2 block text-sm font-medium text-ink">Tom de voz</label>
-            <div className="grid gap-3 sm:grid-cols-3">
-              {TONS.map(t => (
-                <button
-                  key={t.value}
-                  onClick={() => update("tom", t.value)}
-                  className={`rounded-xl border-2 p-4 text-left transition-all ${
-                    config.tom === t.value
-                      ? "border-brand bg-brand-light shadow-sm"
-                      : "border-stone-200 hover:border-stone-300"
-                  }`}
-                >
-                  <p className="text-sm font-semibold text-ink">{t.label}</p>
-                  <p className="mt-1 text-xs text-ink-soft">{t.desc}</p>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-5">
-            <label className="mb-2 flex items-center gap-2 text-sm font-medium text-ink">
-              <Clock size={15} className="text-ink-soft" /> Horário de atendimento humano
-            </label>
-            <p className="mb-2 text-xs text-ink-soft">Fora deste horário a IA continua atendendo, mas avisa que o corretor retorna no próximo dia útil.</p>
-            <input
-              type="text"
-              value={config.horarioAtendimento}
-              onChange={e => update("horarioAtendimento", e.target.value)}
-              className="w-full max-w-sm rounded-lg border border-stone-200 bg-white px-3 py-2.5 text-sm text-ink outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+            <p className="mb-2 text-xs text-ink-soft">Use <code className="rounded bg-stone-100 px-1 py-0.5 text-[11px]">{"{imobiliária}"}</code> para inserir o nome automaticamente.</p>
+            <textarea
+              value={config.saudacao}
+              onChange={e => update("saudacao", e.target.value)}
+              rows={3}
+              className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2.5 text-sm text-ink outline-none transition-all placeholder:text-stone-400 focus:border-brand focus:ring-2 focus:ring-brand/20"
             />
           </div>
         </Section>
 
-        {/* ── Section: Mensagens personalizadas ── */}
-        <Section
-          title="Mensagens Personalizadas"
-          icon={<Zap size={18} />}
-          description="Edite as mensagens-chave que a IA envia"
-          open={openSections.mensagens}
-          onToggle={() => toggle("mensagens")}
-        >
-          <TextArea
-            label="Mensagem de saudação"
-            hint="Primeira mensagem que o cliente recebe. Use {imobiliária} para inserir o nome."
-            value={config.saudacao}
-            onChange={v => update("saudacao", v)}
-            rows={3}
-          />
-          <TextArea
-            label="Mensagem fora do horário"
-            hint="Enviada quando o cliente fala fora do horário de atendimento humano."
-            value={config.mensagemAusencia}
-            onChange={v => update("mensagemAusencia", v)}
-            rows={3}
-            className="mt-4"
-          />
-          <TextArea
-            label="Mensagem de encerramento"
-            hint="Quando a conversa termina naturalmente."
-            value={config.encerramento}
-            onChange={v => update("encerramento", v)}
-            rows={2}
-            className="mt-4"
-          />
-        </Section>
-
-        {/* ── Section: Handoff ── */}
-        <Section
-          title="Transferência para o Corretor"
-          icon={<Users size={18} />}
-          description="Quando a IA passa o lead pra você"
-          open={openSections.handoff}
-          onToggle={() => toggle("handoff")}
-        >
-          <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-            <div className="flex items-start gap-3">
-              <Info size={16} className="mt-0.5 shrink-0 text-brand" />
-              <div className="text-sm text-ink-soft">
-                <p>A IA dá uma <strong>nota de 0 a 18</strong> para cada lead com base nas respostas:</p>
-                <ul className="mt-2 space-y-1 text-xs">
-                  <li><span className="font-mono text-green-600">+3</span> Já arrematou antes</li>
-                  <li><span className="font-mono text-green-600">+3</span> Tem imóvel específico em mente</li>
-                  <li><span className="font-mono text-green-600">+3</span> Capital disponível ou crédito aprovado</li>
-                  <li><span className="font-mono text-green-600">+2</span> Objetivo claro (morar ou investir)</li>
-                  <li><span className="font-mono text-green-600">+2</span> Faixa de valor definida</li>
-                  <li><span className="font-mono text-green-600">+2</span> Quer comprar em menos de 30 dias</li>
-                  <li><span className="font-mono text-amber-600">−3</span> "Só estou entendendo como funciona"</li>
-                </ul>
+        {/* ── Perguntas de qualificação ── */}
+        <Section title="Perguntas de qualificação" icon={<Info size={18} />} desc="A IA faz essas perguntas uma a uma, na ordem" open={openSections.perguntas} onToggle={() => toggle("perguntas")}>
+          <p className="mb-4 text-xs text-ink-soft">
+            Arraste para reordenar. A IA faz cada pergunta naturalmente durante a conversa — não como formulário.
+            Adicione perguntas específicas do seu negócio.
+          </p>
+          <div className="space-y-2">
+            {config.perguntas.map((p, i) => (
+              <div key={i} className="group flex items-start gap-2 rounded-lg border border-stone-200 bg-white p-3 transition hover:border-stone-300">
+                <div className="flex shrink-0 flex-col items-center gap-1 pt-1">
+                  <button onClick={() => movePergunta(i, i - 1)} disabled={i === 0} className="text-stone-300 hover:text-ink disabled:opacity-30" aria-label="Mover para cima">
+                    <ChevronUp size={14} />
+                  </button>
+                  <GripVertical size={14} className="text-stone-300" />
+                  <button onClick={() => movePergunta(i, i + 1)} disabled={i === config.perguntas.length - 1} className="text-stone-300 hover:text-ink disabled:opacity-30" aria-label="Mover para baixo">
+                    <ChevronDown size={14} />
+                  </button>
+                </div>
+                <span className="mt-2 shrink-0 text-xs font-semibold text-ink-soft">{i + 1}.</span>
+                <textarea
+                  value={p}
+                  onChange={e => updatePergunta(i, e.target.value)}
+                  rows={2}
+                  placeholder="Digite a pergunta..."
+                  className="flex-1 resize-none rounded border-0 bg-transparent px-1 py-1 text-sm text-ink outline-none placeholder:text-stone-400"
+                />
+                <button onClick={() => removePergunta(i)} className="mt-1 shrink-0 rounded p-1 text-stone-300 transition hover:bg-red-50 hover:text-danger" aria-label="Remover pergunta">
+                  <Trash2 size={14} />
+                </button>
               </div>
-            </div>
+            ))}
           </div>
-
-          <div className="mt-5">
-            <label className="mb-1 block text-sm font-medium text-ink">
-              Nota mínima para transferir pra você
-            </label>
-            <p className="mb-3 text-xs text-ink-soft">
-              Leads com nota igual ou acima deste valor são transferidos imediatamente. Os demais continuam sendo nutridos pela IA.
-            </p>
-            <div className="flex items-center gap-4">
-              <input
-                type="range"
-                min={6}
-                max={18}
-                step={1}
-                value={config.scoreHandoff}
-                onChange={e => update("scoreHandoff", Number(e.target.value))}
-                className="flex-1 accent-brand"
-              />
-              <span className={`flex h-10 w-14 items-center justify-center rounded-lg text-lg font-bold ${
-                config.scoreHandoff >= 12 ? "bg-brand-light text-brand" :
-                config.scoreHandoff >= 8 ? "bg-accent-light text-accent" :
-                "bg-red-50 text-danger"
-              }`}>
-                {config.scoreHandoff}
-              </span>
-            </div>
-            <div className="mt-2 flex justify-between text-[10px] text-ink-soft">
-              <span>Mais leads (menos filtrado)</span>
-              <span>Menos leads (mais qualificado)</span>
-            </div>
-          </div>
+          <button
+            onClick={addPergunta}
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-stone-200 py-3 text-sm font-medium text-ink-soft transition hover:border-brand hover:text-brand"
+          >
+            <Plus size={16} /> Adicionar pergunta
+          </button>
         </Section>
 
-        {/* ── Section: Avançado ── */}
-        <Section
-          title="Avançado"
-          icon={<Shield size={18} />}
-          description="Restrições e regras adicionais"
-          open={openSections.avancado}
-          onToggle={() => toggle("avancado")}
-        >
-          <TextArea
-            label="Frases ou assuntos proibidos"
-            hint="Temas que a IA NÃO deve abordar. Um por linha."
-            value={config.frasesProibidas}
-            onChange={v => update("frasesProibidas", v)}
-            rows={3}
-            placeholder={"Ex.:\nNão mencionar concorrente X\nNão falar de preço de assessoria jurídica\nNão prometer prazo de desocupação"}
+        {/* ── Base de conhecimento ── */}
+        <Section title="Base de conhecimento" icon={<BookOpen size={18} />} desc="Informações extras que a IA deve saber sobre sua empresa" open={openSections.conhecimento} onToggle={() => toggle("conhecimento")}>
+          <p className="mb-3 text-xs text-ink-soft">
+            Cole aqui tudo que a IA deve saber: serviços que você oferece, regras de pagamento,
+            tipos de leilão que trabalha, parcerias, qualquer informação que um cliente pode perguntar.
+            Escreva como se estivesse explicando pra um colega de trabalho.
+          </p>
+          <textarea
+            value={config.baseConhecimento}
+            onChange={e => update("baseConhecimento", e.target.value)}
+            rows={8}
+            placeholder={"Ex.:\n- Trabalhamos com leilões extrajudiciais da Caixa, Itaú e Bradesco\n- Oferecemos assessoria jurídica inclusa no serviço\n- Comissão: 5% sobre o valor do arremate\n- Aceitamos clientes que querem financiar pelo banco\n- Atuamos em São Paulo capital e região metropolitana\n- Temos parceria com o escritório X para desocupação"}
+            className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2.5 text-sm text-ink outline-none transition-all placeholder:text-stone-400 focus:border-brand focus:ring-2 focus:ring-brand/20"
           />
+        </Section>
 
-          <div className="mt-5 rounded-xl border border-stone-200 bg-stone-50 p-4">
-            <h4 className="text-sm font-semibold text-ink">Regras fixas (não editáveis)</h4>
-            <p className="mb-3 text-xs text-ink-soft">Estas regras existem para proteger você e seus clientes:</p>
-            <ul className="space-y-2 text-xs text-ink-soft">
-              <li className="flex items-start gap-2"><Shield size={12} className="mt-0.5 shrink-0 text-brand" /> Nunca dá parecer jurídico — direciona para advogado</li>
-              <li className="flex items-start gap-2"><Shield size={12} className="mt-0.5 shrink-0 text-brand" /> Nunca garante prazos de desocupação</li>
-              <li className="flex items-start gap-2"><Shield size={12} className="mt-0.5 shrink-0 text-brand" /> Nunca afirma que um leilão é seguro sem análise do edital</li>
-              <li className="flex items-start gap-2"><Shield size={12} className="mt-0.5 shrink-0 text-brand" /> Nunca inventa dados de imóveis — só usa a base real</li>
-              <li className="flex items-start gap-2"><Shield size={12} className="mt-0.5 shrink-0 text-brand" /> Nunca faz cálculos de cabeça — sempre usa o simulador</li>
-              <li className="flex items-start gap-2"><Shield size={12} className="mt-0.5 shrink-0 text-brand" /> Se não souber algo, diz que não sabe e que você pode ajudar</li>
-            </ul>
+        {/* ── Quando me avisar ── */}
+        <Section title="Quando a IA te avisa" icon={<Users size={18} />} desc="Qual tipo de lead chega até você" open={openSections.handoff} onToggle={() => toggle("handoff")}>
+          <div className="space-y-3">
+            {HANDOFF_OPTIONS.map(opt => (
+              <button
+                key={opt.value}
+                onClick={() => update("nivelHandoff", opt.value)}
+                className={`w-full rounded-xl border-2 p-5 text-left transition-all ${
+                  config.nivelHandoff === opt.value
+                    ? "border-brand bg-brand-light/50 shadow-sm"
+                    : "border-stone-200 hover:border-stone-300"
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">{opt.icon}</span>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="font-display text-sm font-bold text-ink">{opt.title}</p>
+                      {opt.recommended && (
+                        <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-semibold text-accent">Recomendado</span>
+                      )}
+                    </div>
+                    <p className="mt-1 text-sm text-ink-soft">{opt.desc}</p>
+                    <p className="mt-2 text-xs italic text-ink-soft/70">{opt.example}</p>
+                  </div>
+                  <div className={`mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
+                    config.nivelHandoff === opt.value ? "border-brand bg-brand" : "border-stone-300"
+                  }`}>
+                    {config.nivelHandoff === opt.value && <div className="h-2 w-2 rounded-full bg-white" />}
+                  </div>
+                </div>
+              </button>
+            ))}
           </div>
         </Section>
 
-        {/* Sticky save bar */}
+        {/* Sticky save */}
         <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-stone-200 bg-surface/95 px-6 py-3 backdrop-blur-sm lg:left-[72px]">
           <div className="mx-auto flex max-w-3xl items-center justify-between">
-            <p className="text-xs text-ink-soft">As alterações serão aplicadas no próximo atendimento.</p>
+            <p className="text-xs text-ink-soft">As alterações valem a partir do próximo atendimento.</p>
             <Button onClick={handleSave} variant={saved ? "ghost" : "primary"}>
-              <Save size={16} />
-              {saved ? "Salvo!" : "Salvar"}
+              <Save size={16} /> {saved ? "Salvo!" : "Salvar"}
             </Button>
           </div>
         </div>
@@ -355,24 +277,17 @@ export default function AgentConfigPage() {
   );
 }
 
-/* ── Reusable components ── */
-
-function Section({
-  title, icon, description, open, onToggle, children,
-}: {
-  title: string; icon: React.ReactNode; description: string;
-  open: boolean; onToggle: () => void; children: React.ReactNode;
+function Section({ title, icon, desc, open, onToggle, children }: {
+  title: string; icon: React.ReactNode; desc: string; open: boolean; onToggle: () => void; children: React.ReactNode;
 }) {
   return (
     <Card className="mb-4">
       <button onClick={onToggle} className="flex w-full items-center justify-between text-left">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-light text-brand">
-            {icon}
-          </div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-light text-brand">{icon}</div>
           <div>
             <h3 className="font-display text-sm font-bold text-ink">{title}</h3>
-            <p className="text-xs text-ink-soft">{description}</p>
+            <p className="text-xs text-ink-soft">{desc}</p>
           </div>
         </div>
         {open ? <ChevronUp size={18} className="text-ink-soft" /> : <ChevronDown size={18} className="text-ink-soft" />}
@@ -382,44 +297,15 @@ function Section({
   );
 }
 
-function Field({
-  label, hint, value, onChange, placeholder, className,
-}: {
-  label: string; hint?: string; value: string;
-  onChange: (v: string) => void; placeholder?: string; className?: string;
+function Field({ label, hint, value, onChange, placeholder, className }: {
+  label: string; hint?: string; value: string; onChange: (v: string) => void; placeholder?: string; className?: string;
 }) {
   return (
     <div className={className}>
       <label className="mb-1 block text-sm font-medium text-ink">{label}</label>
       {hint && <p className="mb-1.5 text-xs text-ink-soft">{hint}</p>}
-      <input
-        type="text"
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2.5 text-sm text-ink outline-none transition-all placeholder:text-stone-400 focus:border-brand focus:ring-2 focus:ring-brand/20"
-      />
-    </div>
-  );
-}
-
-function TextArea({
-  label, hint, value, onChange, rows = 3, placeholder, className,
-}: {
-  label: string; hint?: string; value: string;
-  onChange: (v: string) => void; rows?: number; placeholder?: string; className?: string;
-}) {
-  return (
-    <div className={className}>
-      <label className="mb-1 block text-sm font-medium text-ink">{label}</label>
-      {hint && <p className="mb-1.5 text-xs text-ink-soft">{hint}</p>}
-      <textarea
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        rows={rows}
-        placeholder={placeholder}
-        className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2.5 text-sm text-ink outline-none transition-all placeholder:text-stone-400 focus:border-brand focus:ring-2 focus:ring-brand/20"
-      />
+      <input type="text" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+        className="w-full rounded-lg border border-stone-200 bg-white px-3 py-2.5 text-sm text-ink outline-none transition-all placeholder:text-stone-400 focus:border-brand focus:ring-2 focus:ring-brand/20" />
     </div>
   );
 }
