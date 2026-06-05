@@ -319,6 +319,25 @@ section{padding:72px 0}
 .pricing-cta .btn{width:100%}
 .pricing-guarantee{text-align:center;font-size:.8rem;color:var(--ink-faint);margin-top:16px;line-height:1.6}
 
+/* ── PRICING TOGGLE ── */
+.pricing-toggle{
+  display:flex;align-items:center;justify-content:center;gap:0;
+  margin:0 auto 36px;background:var(--border);border-radius:60px;
+  padding:4px;max-width:320px;
+}
+.pricing-toggle button{
+  flex:1;padding:10px 20px;border:none;border-radius:60px;
+  font-family:var(--font-body);font-size:.9rem;font-weight:600;
+  cursor:pointer;transition:all .2s;background:transparent;color:var(--ink-soft);
+  -webkit-tap-highlight-color:transparent;
+}
+.pricing-toggle button.active{background:var(--brand);color:#fff;box-shadow:var(--shadow-sm)}
+.pricing-badge{
+  display:inline-block;background:var(--accent);color:#fff;
+  font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:20px;
+  margin-left:6px;vertical-align:middle;
+}
+
 /* ── COMPARE ── */
 .compare-stack{display:flex;flex-direction:column;gap:16px;max-width:500px;margin:0 auto}
 .compare-card{
@@ -563,7 +582,7 @@ footer .links a:hover{color:var(--accent)}
     </div>
     <div class="logo-text">ImobLeilão <span>CRM</span></div>
   </a>
-  <a href="https://wa.me/5571993061031?text=Ol%C3%A1%2C%20quero%20contratar%20o%20ImobLeil%C3%A3o%20CRM!" class="btn btn-accent" target="_blank">Começar agora</a>
+  <a href="https://www.asaas.com/c/lzts6mh3w5aa7ngt" class="btn btn-accent" target="_blank">Começar agora</a>
 </div>
 </nav>
 
@@ -578,7 +597,7 @@ footer .links a:hover{color:var(--accent)}
   <h1 class="reveal reveal-d1">Sua imobiliária vendendo 24h.<br>Mais arremates. Menos correria.</h1>
   <p class="sub reveal reveal-d2">O CRM com agente de IA que atende seus leads de leilão no WhatsApp, qualifica e entrega só quem quer comprar de verdade.</p>
   <div class="cta-row reveal reveal-d3">
-    <a href="https://wa.me/5571993061031?text=Ol%C3%A1%2C%20quero%20contratar%20o%20ImobLeil%C3%A3o%20CRM!" class="btn btn-accent btn-lg" target="_blank">Começar agora</a>
+    <a href="https://www.asaas.com/c/lzts6mh3w5aa7ngt" class="btn btn-accent btn-lg" target="_blank">Começar agora</a>
     <a href="#como-funciona" class="btn btn-white">Como funciona</a>
   </div>
   <p class="cta-note reveal reveal-d3">Garantia de 7 dias. Não gostou, devolvemos seu dinheiro.</p>
@@ -752,11 +771,15 @@ footer .links a:hover{color:var(--accent)}
   <div class="section-label reveal">Preço</div>
   <h2 class="section-title reveal" style="margin-left:auto;margin-right:auto">Simples. Sem surpresas.</h2>
   <p class="section-sub reveal" style="margin-left:auto;margin-right:auto">Um plano. Tudo incluso. Sem pegadinha.</p>
+  <div class="pricing-toggle reveal">
+    <button class="active" onclick="setPlan('monthly')">Mensal</button>
+    <button onclick="setPlan('annual')">Anual<span class="pricing-badge">-17%</span></button>
+  </div>
   <div class="pricing-card reveal">
     <div class="pricing-top">
       <div class="pricing-name">ImobLeilão CRM</div>
-      <div class="pricing-amount">R$ 297<span>/mês</span></div>
-      <p class="pricing-annual">ou R$ 2.970/ano &mdash; <b>2 meses grátis</b></p>
+      <div class="pricing-amount" id="priceDisplay">R$ 297<span>/mês</span></div>
+      <p class="pricing-annual" id="priceNote">ou R$ 2.970/ano &mdash; <b>2 meses grátis</b></p>
     </div>
     <div class="pricing-body">
       <ul class="pricing-list">
@@ -794,7 +817,7 @@ footer .links a:hover{color:var(--accent)}
         </li>
       </ul>
       <div class="pricing-cta">
-        <a href="https://wa.me/5571993061031?text=Ol%C3%A1%2C%20quero%20contratar%20o%20ImobLeil%C3%A3o%20CRM!" class="btn btn-accent btn-lg" target="_blank">Começar agora</a>
+        <a href="https://www.asaas.com/c/lzts6mh3w5aa7ngt" class="btn btn-accent btn-lg" target="_blank" id="pricingCta">Começar agora</a>
         <p class="pricing-guarantee">Garantia de 7 dias. Não gostou, devolvemos 100% do valor.</p>
       </div>
     </div>
@@ -903,7 +926,7 @@ footer .links a:hover{color:var(--accent)}
   <h2 class="reveal">Seus concorrentes já usam IA.<br>E você?</h2>
   <p class="reveal reveal-d1">Ative seu vendedor de IA agora e pare de perder leads.</p>
   <div class="reveal reveal-d2">
-    <a href="https://wa.me/5571993061031?text=Ol%C3%A1%2C%20quero%20contratar%20o%20ImobLeil%C3%A3o%20CRM!" class="btn btn-accent btn-lg" target="_blank">Começar agora</a>
+    <a href="https://www.asaas.com/c/lzts6mh3w5aa7ngt" class="btn btn-accent btn-lg" target="_blank">Começar agora</a>
     <p class="cta-note">R$ 297/mês. Garantia de 7 dias ou seu dinheiro de volta.</p>
   </div>
 </div>
@@ -974,6 +997,21 @@ window.addEventListener('scroll', () => {
   }
   lastY = y;
 },{passive:true});
+
+// Pricing toggle
+const PLANS = {
+  monthly: { url: 'https://www.asaas.com/c/lzts6mh3w5aa7ngt', price: 'R$ 297<span>/mês</span>', note: 'ou R$ 2.970/ano — <b>2 meses grátis</b>' },
+  annual: { url: 'https://www.asaas.com/c/bdx7oj0cswa2l3pz', price: 'R$ 247<span>/mês</span>', note: 'R$ 2.970 à vista — <b>economia de R$ 594</b>' }
+};
+function setPlan(plan) {
+  const p = PLANS[plan];
+  document.getElementById('priceDisplay').innerHTML = p.price;
+  document.getElementById('priceNote').innerHTML = p.note;
+  document.getElementById('pricingCta').href = p.url;
+  document.querySelectorAll('.pricing-toggle button').forEach((b,i) => {
+    b.classList.toggle('active', (plan==='monthly' && i===0) || (plan==='annual' && i===1));
+  });
+}
 
 // Smooth scroll
 document.querySelectorAll('a[href^="#"]').forEach(a => {
