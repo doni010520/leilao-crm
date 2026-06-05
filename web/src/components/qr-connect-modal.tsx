@@ -47,6 +47,8 @@ export function QrConnectModal({
     }
   }, [channelId]);
 
+  const [busyStep, setBusyStep] = useState("");
+
   async function genCode() {
     const digits = phone.replace(/\D/g, "");
     if (digits.length < 10) {
@@ -57,10 +59,12 @@ export function QrConnectModal({
     setErr(null);
     setDbg(null);
     setPairCode(undefined);
+    setBusyStep("Preparando conexão...");
     try {
+      setBusyStep("Gerando código...");
       let r = await refreshChannelConnection(channelId, digits);
-      // UAZAPI às vezes retorna vazio na 1ª chamada — tenta de novo.
       if (!r.pairCode && r.status !== "connected") {
+        setBusyStep("Tentando novamente...");
         await new Promise((res) => setTimeout(res, 1800));
         r = await refreshChannelConnection(channelId, digits);
       }
@@ -69,12 +73,13 @@ export function QrConnectModal({
       if (r.pairCode) setPairCode(r.pairCode);
       else if (r.status !== "connected")
         setErr(
-          "Não consegui gerar o código agora. Aguarde alguns segundos e tente de novo — o WhatsApp limita a geração de códigos em sequência.",
+          "Não consegui gerar o código agora. Aguarde 30 segundos e tente de novo — o WhatsApp limita a geração de códigos em sequência.",
         );
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Erro ao gerar o código.");
     } finally {
       setBusy(false);
+      setBusyStep("");
     }
   }
 
@@ -189,8 +194,11 @@ export function QrConnectModal({
                   disabled={busy || phone.replace(/\D/g, "").length < 10}
                   className="mx-auto mt-4 flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-dark disabled:opacity-50"
                 >
-                  <RefreshCw size={14} className={busy ? "animate-spin" : ""} /> {busy ? "Gerando..." : pairCode ? "Gerar novo código" : "Gerar código"}
+                  <RefreshCw size={14} className={busy ? "animate-spin" : ""} /> {busy ? busyStep || "Gerando..." : pairCode ? "Gerar novo código" : "Gerar código"}
                 </button>
+                {pairCode && !busy && (
+                  <p className="mt-2 text-[10px] text-ink-soft">O código expira em 60 segundos. Se não funcionar, gere um novo.</p>
+                )}
                 {err && <p className="mt-2 text-xs text-danger">{err}</p>}
                 {err && dbg && <p className="mt-2 break-all text-[10px] font-mono text-ink-soft/70">{dbg}</p>}
               </>
