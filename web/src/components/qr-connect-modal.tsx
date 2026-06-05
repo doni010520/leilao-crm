@@ -47,7 +47,15 @@ export function QrConnectModal({
     }
   }, [channelId]);
 
-  const [busyStep, setBusyStep] = useState("");
+  const [busyStep, setBusyStep] = useState(0); // 0=idle, 1-5=progress steps
+  const STEPS = [
+    "",
+    "Preparando conexão...",
+    "Conectando ao WhatsApp...",
+    "Gerando código de pareamento...",
+    "Quase lá...",
+    "Finalizando...",
+  ];
 
   async function genCode() {
     const digits = phone.replace(/\D/g, "");
@@ -59,12 +67,17 @@ export function QrConnectModal({
     setErr(null);
     setDbg(null);
     setPairCode(undefined);
-    setBusyStep("Preparando conexão...");
+    setBusyStep(1);
+    // Advance steps on a timer so user sees continuous progress
+    const stepTimer = setInterval(() => {
+      setBusyStep(prev => prev < 5 ? prev + 1 : prev);
+    }, 4000);
     try {
-      setBusyStep("Gerando código...");
+      setBusyStep(2);
       let r = await refreshChannelConnection(channelId, digits);
+      setBusyStep(4);
       if (!r.pairCode && r.status !== "connected") {
-        setBusyStep("Tentando novamente...");
+        setBusyStep(5);
         await new Promise((res) => setTimeout(res, 1800));
         r = await refreshChannelConnection(channelId, digits);
       }
@@ -78,8 +91,9 @@ export function QrConnectModal({
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Erro ao gerar o código.");
     } finally {
+      clearInterval(stepTimer);
       setBusy(false);
-      setBusyStep("");
+      setBusyStep(0);
     }
   }
 
@@ -160,16 +174,22 @@ export function QrConnectModal({
                 <p className="mb-3 text-xs text-ink-soft">
                   WhatsApp → <b>Aparelhos conectados</b> → <b>Conectar um aparelho</b> e escaneie:
                 </p>
-                <div className="mx-auto flex h-56 w-56 items-center justify-center rounded-lg border border-gray-200 bg-white">
+                <div className="mx-auto flex h-56 w-56 items-center justify-center rounded-lg border border-stone-200 bg-white">
                   {img ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={img} alt="QR Code" className="h-52 w-52" />
                   ) : (
-                    <span className="text-xs text-ink-soft">Gerando QR Code...</span>
+                    <div className="flex flex-col items-center gap-3">
+                      <RefreshCw size={24} className="animate-spin text-brand" />
+                      <span className="text-xs text-ink-soft">Gerando QR Code...</span>
+                      <div className="h-1 w-32 overflow-hidden rounded-full bg-stone-200">
+                        <div className="h-full w-1/2 animate-pulse rounded-full bg-brand" />
+                      </div>
+                    </div>
                   )}
                 </div>
                 <button onClick={refreshQr} disabled={busy} className="mx-auto mt-4 flex items-center gap-1 text-xs font-medium text-brand hover:underline disabled:opacity-50">
-                  <RefreshCw size={13} className={busy ? "animate-spin" : ""} /> Gerar novo código
+                  <RefreshCw size={13} className={busy ? "animate-spin" : ""} /> Atualizar QR Code
                 </button>
               </>
             ) : (
@@ -189,13 +209,26 @@ export function QrConnectModal({
                     <p className="mt-1 font-mono text-3xl font-bold tracking-[0.2em] text-brand">{pairCode}</p>
                   </div>
                 ) : null}
-                <button
-                  onClick={genCode}
-                  disabled={busy || phone.replace(/\D/g, "").length < 10}
-                  className="mx-auto mt-4 flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-dark disabled:opacity-50"
-                >
-                  <RefreshCw size={14} className={busy ? "animate-spin" : ""} /> {busy ? busyStep || "Gerando..." : pairCode ? "Gerar novo código" : "Gerar código"}
-                </button>
+                {busy ? (
+                  <div className="mt-4 space-y-3">
+                    {/* Progress bar */}
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-stone-200">
+                      <div
+                        className="h-full rounded-full bg-brand transition-all duration-1000 ease-out"
+                        style={{ width: `${Math.min(busyStep * 20, 95)}%` }}
+                      />
+                    </div>
+                    <p className="text-xs font-medium text-brand">{STEPS[busyStep] || "Gerando..."}</p>
+                  </div>
+                ) : (
+                  <button
+                    onClick={genCode}
+                    disabled={phone.replace(/\D/g, "").length < 10}
+                    className="mx-auto mt-4 flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-dark disabled:opacity-50"
+                  >
+                    <RefreshCw size={14} /> {pairCode ? "Gerar novo código" : "Gerar código"}
+                  </button>
+                )}
                 {pairCode && !busy && (
                   <p className="mt-2 text-[10px] text-ink-soft">O código expira em 60 segundos. Se não funcionar, gere um novo.</p>
                 )}
