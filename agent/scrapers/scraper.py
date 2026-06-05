@@ -154,32 +154,70 @@ class CaixaScraper(BaseScraper):
 
     async def fetch_properties(self) -> list[dict]:
         all_props = []
+        import httpx
+
+        # Strategy 1: Try simple HTTP first (works when server is in Brazil / not blocked)
+        async with httpx.AsyncClient(timeout=30, follow_redirects=False) as client:
+            for uf in self.estados:
+                try:
+                    url = self.CSV_URL.format(uf=uf)
+                    logger.info(f"[caixa] Trying HTTP download for {uf}...")
+                    resp = await client.get(url)
+                    if resp.status_code == 200 and "Lista de" in resp.text[:200]:
+                        props = self._parse_csv(resp.text, uf)
+                        all_props.extend(props)
+                        logger.info(f"[caixa] {uf}: {len(props)} properties (via HTTP)")
+                        await asyncio.sleep(1)
+                        continue
+                    logger.info(f"[caixa] HTTP blocked for {uf} (status={resp.status_code}), trying Playwright...")
+                except Exception as e:
+                    logger.warning(f"[caixa] HTTP failed for {uf}: {e}")
+
+                # Strategy 2: Playwright
+                try:
+                    props = await self._fetch_with_playwright(uf)
+                    all_props.extend(props)
+                    logger.info(f"[caixa] {uf}: {len(props)} properties (via Playwright)")
+                except Exception as e:
+                    logger.error(f"[caixa] Playwright also failed for {uf}: {e}")
+                await asyncio.sleep(2)
+
+        return all_props
+
+    async def _fetch_with_playwright(self, uf: str) -> list[dict]:
         try:
             from playwright.async_api import async_playwright
         except ImportError:
-            logger.error("[caixa] Playwright not installed. Run: pip install playwright && playwright install chromium")
+            logger.error("[caixa] Playwright not installed")
             return []
 
+        url = self.CSV_URL.format(uf=uf)
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
+            browser = await p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-blink-features=AutomationControlled"])
             context = await browser.new_context(
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
                 locale="pt-BR",
             )
             page = await context.new_page()
+            # Remove webdriver flag
+            await page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
 
-            for uf in self.estados:
-                try:
-                    props = await self._fetch_csv(page, uf)
-                    all_props.extend(props)
-                    logger.info(f"[caixa] {uf}: {len(props)} properties")
-                    await asyncio.sleep(2)
-                except Exception as e:
-                    logger.error(f"[caixa] Failed {uf}: {e}")
+            try:
+                await page.goto(url, wait_until="networkidle", timeout=60000)
+                await page.wait_for_timeout(5000)
+                content = await page.content()
+                if "Radware" in content or "CAPTCHA" in content:
+                    await page.wait_for_timeout(15000)
+                    content = await page.content()
 
-            await browser.close()
+                body = await page.evaluate("document.body.innerText")
+                if body and "Lista de" in body[:200]:
+                    return self._parse_csv(body, uf)
 
-        return all_props
+                logger.warning(f"[caixa] Playwright could not get CSV for {uf}")
+                return []
+            finally:
+                await browser.close()
 
     async def _fetch_csv(self, page, uf: str) -> list[dict]:
         url = self.CSV_URL.format(uf=uf)
