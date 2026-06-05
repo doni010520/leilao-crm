@@ -9,8 +9,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Playwright for scrapers (optional — comment out to save ~400MB if not scraping)
-# RUN playwright install --with-deps chromium
+# Playwright for scrapers (Caixa requires browser to bypass bot manager)
+RUN pip install --no-cache-dir playwright && playwright install --with-deps chromium
 
 COPY . .
 
