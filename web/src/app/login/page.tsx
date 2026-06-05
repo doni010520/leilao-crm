@@ -90,7 +90,8 @@ export default function LoginPage() {
             </p>
 
             {/* Demo access — remove before production */}
-            <div className="mt-4 border-t border-stone-100 pt-4">
+            <div className="mt-4 border-t border-stone-100 pt-4 space-y-2">
+              <p className="text-center text-[10px] font-medium uppercase tracking-wider text-ink-soft/60">Acesso rápido para testes</p>
               <button
                 type="button"
                 onClick={() => {
@@ -99,9 +100,21 @@ export default function LoginPage() {
                   if (emailInput) { emailInput.value = "adonias@leilaocrm.com.br"; emailInput.dispatchEvent(new Event("input", { bubbles: true })); }
                   if (passInput) { passInput.value = "Leilao@2026!"; passInput.dispatchEvent(new Event("input", { bubbles: true })); }
                 }}
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-stone-300 py-2 text-xs font-medium text-ink-soft transition hover:border-brand hover:text-brand"
+              >
+                🔑 Admin — acesso completo
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const emailInput = document.querySelector<HTMLInputElement>('input[name="email"]');
+                  const passInput = document.querySelector<HTMLInputElement>('input[name="password"]');
+                  if (emailInput) { emailInput.value = "teste@imobleilao.com.br"; emailInput.dispatchEvent(new Event("input", { bubbles: true })); }
+                  if (passInput) { passInput.value = "Teste@2026!"; passInput.dispatchEvent(new Event("input", { bubbles: true })); }
+                }}
                 className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-stone-300 py-2 text-xs font-medium text-ink-soft transition hover:border-accent hover:text-accent"
               >
-                🔑 Entrar com conta de teste
+                🔑 Corretor — acesso limitado
               </button>
             </div>
           </div>
