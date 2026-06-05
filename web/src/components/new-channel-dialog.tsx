@@ -60,14 +60,14 @@ export function NewChannelDialog() {
                 <label className="mb-1 block text-xs font-medium text-ink-soft">Tipo de conexão</label>
                 <div className="grid grid-cols-2 gap-2">
                   <TypeOption
-                    label="WhatsApp (QR Code)"
-                    desc="Via UAZAPI"
+                    label="WhatsApp Pessoal"
+                    desc="Conecte via QR Code ou código de 8 dígitos"
                     active={type === "uazapi"}
                     onClick={() => setType("uazapi")}
                   />
                   <TypeOption
-                    label="API Oficial"
-                    desc="Meta Cloud API"
+                    label="WhatsApp Business API"
+                    desc="Conexão oficial da Meta para empresas"
                     active={type === "meta_cloud"}
                     onClick={() => setType("meta_cloud")}
                   />
@@ -101,8 +101,8 @@ export function NewChannelDialog() {
               )}
 
               {type === "uazapi" && (
-                <p className="rounded-lg bg-brand-light px-3 py-2 text-xs text-brand-dark">
-                  Após cadastrar, será gerado um QR Code para você escanear no WhatsApp.
+                <p className="rounded-lg bg-brand-light px-3 py-2 text-xs text-brand">
+                  Após cadastrar, você conecta escaneando um QR Code ou digitando um código de 8 dígitos no seu WhatsApp.
                 </p>
               )}
 
